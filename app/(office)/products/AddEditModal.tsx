@@ -17,6 +17,9 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 // Redux imports
 import { useFilter } from '@/context/FilterContext'
+import { PTypes } from '@/types'
+import { logError } from '@/utils/fetchApi'
+import { handleLogChanges } from '@/utils/text-helper'
 
 const FormSchema = z.object({
   quantity: z.coerce // use coerce to cast to string to number https://stackoverflow.com/questions/76878664/react-hook-form-and-zod-inumber-input
@@ -37,16 +40,17 @@ const FormSchema = z.object({
 
 interface ModalProps {
   hideModal: () => void
+  selectedProduct: PTypes
 }
 
-const TransferModal = ({ hideModal }: ModalProps) => {
+const AddEditModal = ({ selectedProduct, hideModal }: ModalProps) => {
   const { supabase, session } = useSupabase()
   const { setToast } = useFilter()
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      quantity: 0,
+      quantity: selectedProduct.quantity,
       remarks: '',
     },
   })
@@ -57,6 +61,42 @@ const TransferModal = ({ hideModal }: ModalProps) => {
 
   const handleAddQuantity = async (formdata: z.infer<typeof FormSchema>) => {
     try {
+      const oldQty = Number(selectedProduct.quantity)
+      const newQty = Number(formdata.quantity)
+
+      const newData = {
+        quantity: newQty,
+      }
+
+      const { error } = await supabase
+        .from('agriko_office_products')
+        .update(newData)
+        .eq('id', selectedProduct.id)
+
+      if (error) {
+        void logError(
+          'Update Product Quantity',
+          'agriko_final_products',
+          JSON.stringify(newData),
+          'Update Product Quantity Error'
+        )
+        setToast(
+          'error',
+          'Saving failed, please reload the page or contact Berl.'
+        )
+        throw new Error(error.message)
+      }
+
+      // Log changes
+      handleLogChanges(
+        {},
+        {},
+        'office_product_id',
+        selectedProduct.id,
+        session.user.id,
+        `Adjusted Quantity from ${selectedProduct.quantity} to ${formdata.quantity} with remarks: ${formdata.remarks}`
+      )
+
       // pop up the success message
       setToast('success', 'Successfully Save')
 
@@ -73,7 +113,7 @@ const TransferModal = ({ hideModal }: ModalProps) => {
         <div className="app__modal_wrapper2">
           <div className="app__modal_wrapper3">
             <div className="app__modal_header">
-              <h5 className="app__modal_header_text">Transfer Products</h5>
+              <h5 className="app__modal_header_text">Adjust Quantity</h5>
               <button
                 onClick={hideModal}
                 disabled={form.formState.isSubmitting}
@@ -94,7 +134,7 @@ const TransferModal = ({ hideModal }: ModalProps) => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="app__form_label">
-                          Quantity
+                          Adjust Quantity
                         </FormLabel>
                         <FormControl>
                           <Input
@@ -176,4 +216,4 @@ const TransferModal = ({ hideModal }: ModalProps) => {
   )
 }
 
-export default TransferModal
+export default AddEditModal

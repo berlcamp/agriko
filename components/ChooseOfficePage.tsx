@@ -50,8 +50,8 @@ export default function ChooseOfficePage({
                       <Image
                         src="/logo.png"
                         width={120}
-                        height={32}
-                        objectFit="cover"
+                        height={120}
+                        priority={true}
                         alt="Logo Agriko"
                       />
                     </div>

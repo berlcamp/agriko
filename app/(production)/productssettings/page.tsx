@@ -242,6 +242,7 @@ const Page: React.FC = () => {
                   <th className="app__th pl-4"></th>
                   <th className="app__th">Product Name</th>
                   <th className="hidden md:table-cell app__th">Size</th>
+                  <th className="hidden md:table-cell app__th">Price</th>
                   <th className="hidden md:table-cell app__th">Category</th>
                   <th className="hidden md:table-cell app__th">Status</th>
                 </tr>
@@ -319,7 +320,13 @@ const Page: React.FC = () => {
                           <div className="md:hidden app__td_mobile">
                             <div>
                               <span className="app_td_mobile_label">Size:</span>{' '}
-                              {item.size}
+                              {item.size} {item.custom_size}
+                            </div>
+                            <div>
+                              <span className="app_td_mobile_label">
+                                Price:
+                              </span>{' '}
+                              {item.price}
                             </div>
                             <div>
                               <span className="app_td_mobile_label">
@@ -343,7 +350,16 @@ const Page: React.FC = () => {
                         {/* End - Mobile View */}
                       </th>
                       <td className="hidden md:table-cell app__td">
-                        <div>{item.size}</div>
+                        <div>
+                          {item.size === 'Custom Size' ? (
+                            <span>{item.custom_size}</span>
+                          ) : (
+                            <span>{item.size}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="hidden md:table-cell app__td">
+                        <div>{item.price}</div>
                       </td>
                       <td className="hidden md:table-cell app__td">
                         <div>{item.category}</div>

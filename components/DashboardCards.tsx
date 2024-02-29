@@ -7,7 +7,7 @@ import type { RawMaterialTypes } from '@/types'
 import { useEffect, useState } from 'react'
 
 export default function DashboardCards() {
-  const { supabase, session } = useSupabase()
+  const { supabase } = useSupabase()
   const [list, setList] = useState<RawMaterialTypes[] | null>(null)
 
   useEffect(() => {
@@ -33,11 +33,11 @@ export default function DashboardCards() {
             <div className="items-center font-medium">{item.name}</div>
             <div
               className={`flex font-bold items-center justify-center text-xl w-[150px] ${
-                Number(item.current_quantity) < item.quantity_warning
+                Number(item.quantity_warning) < Number(item.quantity)
                   ? 'text-red-600'
                   : 'text-gray-800'
               }`}>
-              {item.current_quantity} {item.unit}
+              {item.quantity} {item.unit}
             </div>
           </div>
         </div>

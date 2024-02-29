@@ -1,5 +1,5 @@
-import { AccountTypes } from '@/types/index'
 import { createBrowserClient } from '@supabase/ssr'
+import { format } from 'date-fns'
 
 const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 
@@ -31,17 +31,15 @@ export async function fetchAccounts (filters: { filterUser?: string, filterStatu
     // Order By
     query = query.order('id', { ascending: false })
 
-    const { data: userData, error, count } = await query
+    const { data, error, count } = await query
 
     if (error) {
       throw new Error(error.message)
     }
 
-    const data: AccountTypes[] = userData
-
     return { data, count }
   } catch (error) {
-    console.error('fetch error', error)
+    console.error('fetch accounts error', error)
     return { data: [], count: 0 }
   }
 }
@@ -70,7 +68,7 @@ export async function fetchRawMaterials (perPageCount: number, rangeFrom: number
 
     return { data, count }
   } catch (error) {
-    console.error('fetch error', error)
+    console.error('fetch raw materials error', error)
     return { data: [], count: 0 }
   }
 }
@@ -99,7 +97,47 @@ export async function fetchProducts (perPageCount: number, rangeFrom: number) {
 
     return { data, count }
   } catch (error) {
-    console.error('fetch error', error)
+    console.error('fetch products error', error)
+    return { data: [], count: 0 }
+  }
+}
+
+export async function fetchTransfers (filters: { filterOffice?: string, filterDate?: Date | undefined }, perPageCount: number, rangeFrom: number) {
+  try {
+    let query = supabase
+      .from('agriko_transfer_transactions')
+      .select('*, office:office_id(*)', { count: 'exact' })
+
+
+    // Filter date
+    if (filters.filterDate) {
+      query = query.eq('transfer_date', format(new Date(filters.filterDate), 'yyyy-MM-dd'))
+    }
+
+    // Filter office
+    if (filters.filterOffice) {
+      query = query.eq('office_id', filters.filterOffice)
+    }
+
+    // Per Page from context
+    const from = rangeFrom
+    const to = from + (perPageCount - 1)
+
+    // Per Page from context
+    query = query.range(from, to)
+
+    // Order By
+    query = query.order('id', { ascending: false })
+
+    const { data, error, count } = await query
+
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    return { data, count }
+  } catch (error) {
+    console.error('fetch transfers error', error)
     return { data: [], count: 0 }
   }
 }
@@ -152,7 +190,7 @@ export async function fetchErrorLogs (perPageCount: number, rangeFrom: number) {
 
     return { data, count }
   } catch (error) {
-    console.error('fetch error', error)
+    console.error('fetch error logs error', error)
     return { data: [], count: 0 }
   }
 }

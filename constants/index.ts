@@ -13,6 +13,7 @@ export const productSizes = [
   '25kg',
   'Sachet',
   '250ml',
+  'Custom Size',
 ]
 
 export const superAdmins = ['berlcamp@gmail.com']

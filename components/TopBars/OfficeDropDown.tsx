@@ -8,14 +8,17 @@ import { useFilter } from '@/context/FilterContext'
 import { useSupabase } from '@/context/SupabaseProvider'
 import { AccountTypes, OfficeTypes } from '@/types'
 import { logError } from '@/utils/fetchApi'
+import { Check, ChevronDown } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import OneColLayoutLoading from '../Loading/OneColLayoutLoading'
 
 interface propTypes {
   darkMode?: boolean
 }
 
 const OfficeDropDown = ({ darkMode }: propTypes) => {
+  const [loading, setLoading] = useState(false)
   const { currentUser, systemOffices, supabase, session } = useSupabase()
   const { setToast } = useFilter()
 
@@ -30,6 +33,8 @@ const OfficeDropDown = ({ darkMode }: propTypes) => {
   const office = offices.find((w) => w.id === currUser.active_office_id)
 
   const handleSwitchOffice = async (officeId: string) => {
+    setLoading(true)
+
     const { error } = await supabase
       .from('agriko_users')
       .update({ active_office_id: officeId })
@@ -47,6 +52,10 @@ const OfficeDropDown = ({ darkMode }: propTypes) => {
     router.refresh()
   }
 
+  useEffect(() => {
+    setLoading(false)
+  }, [session])
+
   return (
     <>
       <div className="relative inline-block mr-4">
@@ -54,30 +63,38 @@ const OfficeDropDown = ({ darkMode }: propTypes) => {
           <PopoverTrigger>
             <div className="flex items-center space-x-1">
               <span className="text-sm text-gray-600">Office:</span>
-              <span className="text-sm px-2 py-1 border rounded-md font-bold text-gray-700">
-                {office?.name}
-              </span>
+              <div className="flex items-center justify-between space-x-2 text-sm px-2 py-1 border rounded-md font-bold text-gray-700">
+                <span>{office?.name}</span>
+                <ChevronDown className="w-5 h-5" />
+              </div>
             </div>
           </PopoverTrigger>
           <PopoverContent>
             <div className="space-y-1">
-              {filteredOffices.map((w, index) => (
-                <React.Fragment key={index}>
-                  {w.id === currUser.active_office_id ? (
-                    <div className="flex items-center space-x-1 rounded-lg hover:bg-gray-100 px-2 py-1">
-                      <span className="text-sm font-bold text-green-800">
-                        {w.name}
-                      </span>
-                    </div>
-                  ) : (
-                    <div
-                      onClick={() => handleSwitchOffice(w.id)}
-                      className="flex items-center space-x-1 rounded-lg cursor-pointer hover:bg-gray-100 px-2 py-1">
-                      <span className="text-sm">{w.name}</span>
-                    </div>
-                  )}
-                </React.Fragment>
-              ))}
+              {loading ? (
+                <OneColLayoutLoading />
+              ) : (
+                <>
+                  {filteredOffices.map((w, index) => (
+                    <React.Fragment key={index}>
+                      {w.id === currUser.active_office_id ? (
+                        <div className="flex items-center space-x-1 rounded-lg hover:bg-gray-100 px-2 py-1">
+                          <div className="flex items-center justify-between space-x-2 text-sm font-bold text-green-800">
+                            <span>{w.name}</span>
+                            <Check className="w-5 h-5" />
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => handleSwitchOffice(w.id)}
+                          className="flex items-center space-x-1 rounded-lg cursor-pointer hover:bg-gray-100 px-2 py-1">
+                          <span className="text-sm">{w.name}</span>
+                        </div>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </>
+              )}
             </div>
           </PopoverContent>
         </Popover>

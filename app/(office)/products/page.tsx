@@ -19,15 +19,13 @@ import {
 import { productCategories, superAdmins } from '@/constants'
 import { useFilter } from '@/context/FilterContext'
 import { useSupabase } from '@/context/SupabaseProvider'
-import type { FinalProductTypes, PTypes, ProductTypes } from '@/types'
+import type { OfficeProductTypes, PTypes, ProductTypes } from '@/types'
 import { Menu, Transition } from '@headlessui/react'
 import {
   ChevronDownIcon,
   EyeIcon,
   PencilSquareIcon,
-  PlusCircleIcon,
 } from '@heroicons/react/20/solid'
-import { PlusCircledIcon } from '@radix-ui/react-icons'
 import { LayoutGrid, List } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import React, { Fragment, useEffect, useState } from 'react'
@@ -54,24 +52,14 @@ const Page: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<PTypes | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
 
-  // Transfer modal
-  const [showTransferModal, setShowTransferModal] = useState(false)
-
   const { supabase, session } = useSupabase()
   const { hasAccess } = useFilter()
 
   const router = useRouter()
 
-  const handleAddQuantity = (product: PTypes) => {
-    setSelectedProduct(product)
-    setShowAddModal(true)
-    setAddOrAdjust('add')
-  }
-
   const handleAdjustQuantity = (product: PTypes) => {
     setSelectedProduct(product)
     setShowAddModal(true)
-    setAddOrAdjust('adjust')
   }
 
   useEffect(() => {
@@ -79,46 +67,49 @@ const Page: React.FC = () => {
     ;(async () => {
       setLoading(true)
 
-      const { data: finalProducts } = await supabase
-        .from('agriko_final_products')
+      const { data: officeProductsData } = await supabase
+        .from('agriko_office_products')
         .select('*, product:product_id(*)')
 
-      const { data: allProducts } = await supabase
+      const { data: allProductsData } = await supabase
         .from('agriko_products')
         .select('*')
         .eq('status', 'Active')
 
-      if (allProducts) {
+      const allProducts: ProductTypes[] | [] = allProductsData
+      const officeProducts: OfficeProductTypes[] | [] = officeProductsData
+
+      if (officeProducts) {
+        // Add category to office products
+        const officeProductsWithCategory = officeProducts.map(
+          (op: OfficeProductTypes) => {
+            const cat = allProducts.find(
+              (ap) => ap.id === op.product_id
+            )?.category
+
+            return { ...op, category: cat }
+          }
+        )
+
         const categoryArr: ListTypes[] = []
 
-        // Loopt all categories
+        // Loop all categories
         productCategories.forEach((category) => {
           const productArr: PTypes[] = []
 
-          // All Products for this specific category
-          const filteredProducts: ProductTypes[] = allProducts.filter(
-            (p: ProductTypes) => p.category === category
-          )
-
-          // Loop filter products
-          filteredProducts.forEach((p) => {
-            // Count quantity from final products
-            const filteredFinalProducts: FinalProductTypes[] =
-              finalProducts.filter(
-                (f: FinalProductTypes) => f.product_id === p.id
-              )
-            const sumOfQuantities = filteredFinalProducts.reduce(
-              (sum, f) => sum + Number(f.quantity),
-              0
-            )
-
-            productArr.push({
-              id: p.id,
-              product_name: p.name,
-              unit: p.size === 'Custom Size' ? p.custom_size : p.size,
-              quantity: sumOfQuantities,
-            })
+          // Loop office products with category
+          officeProductsWithCategory.forEach((opwc) => {
+            // Count quantity from Office products if it exist
+            if (opwc.category === category) {
+              productArr.push({
+                id: opwc.id,
+                product_name: opwc.product.name,
+                unit: opwc.product.size,
+                quantity: opwc.quantity,
+              })
+            }
           })
+
           // If category has products, add them to categoryArr
           if (productArr.length > 0) {
             categoryArr.push({ category: category, products: productArr })
@@ -207,20 +198,7 @@ const Page: React.FC = () => {
                               <span className="app__product_grid_quantity">
                                 {product.quantity}
                               </span>
-                              <span
-                                onClick={() => handleAddQuantity(product)}
-                                className="cursor-pointer">
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <PlusCircledIcon className="w-5 h-5 text-green-700" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p className="font-light">Add Quantity</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              </span>
+                              <span></span>
                             </div>
                           </div>
                         </div>
@@ -234,7 +212,7 @@ const Page: React.FC = () => {
             {viewType === 'list' && (
               <>
                 <div className="app__title">
-                  <Title title="Final Products Inventory" />
+                  <Title title="Products Inventory" />
                 </div>
                 <div className="mt-2">
                   <table className="app__table">
@@ -277,26 +255,6 @@ const Page: React.FC = () => {
                                     leaveTo="transform opacity-0 scale-95">
                                     <Menu.Items className="app__dropdown_items">
                                       <div className="py-1">
-                                        <Menu.Item>
-                                          <div
-                                            onClick={() =>
-                                              handleAddQuantity(product)
-                                            }
-                                            className="app__dropdown_item">
-                                            <PlusCircleIcon className="w-4 h-4 text-green-700" />
-                                            <span>Add Quantity</span>
-                                          </div>
-                                        </Menu.Item>
-                                        <Menu.Item>
-                                          <div
-                                            onClick={() =>
-                                              handleAdjustQuantity(product)
-                                            }
-                                            className="app__dropdown_item">
-                                            <PencilSquareIcon className="w-4 h-4 text-gray-700" />
-                                            <span>Adjust Quantity</span>
-                                          </div>
-                                        </Menu.Item>
                                         <Menu.Item>
                                           <div
                                             onClick={() => {
@@ -343,7 +301,6 @@ const Page: React.FC = () => {
       {showAddModal && selectedProduct && (
         <AddEditModal
           selectedProduct={selectedProduct}
-          addOrAdjust={addOrAdjust}
           hideModal={() => {
             setShowAddModal(false)
             setRefetch(!refetch)
@@ -353,7 +310,7 @@ const Page: React.FC = () => {
       {/* Logs Modal */}
       {showLogsModal && selectedProduct && (
         <LogsModal
-          refCol="product_id"
+          refCol="office_product_id"
           refValue={selectedProduct.id}
           onClose={() => {
             setShowLogsModal(false)

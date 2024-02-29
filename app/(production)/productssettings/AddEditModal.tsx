@@ -19,20 +19,35 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useSupabase } from '@/context/SupabaseProvider'
-import { ProductTypes } from '@/types'
+import { ProductTypes, RawMaterialTypes } from '@/types'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 // Redux imports
 import { updateList } from '@/GlobalRedux/Features/listSlice'
+import { Button } from '@/components/ui/button'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from '@/components/ui/command'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import { productCategories, productSizes } from '@/constants'
 import { useFilter } from '@/context/FilterContext'
 import { logError } from '@/utils/fetchApi'
+import { PlusIcon, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 const FormSchema = z.object({
-  product_name: z.string({
-    required_error: 'Name is required.',
+  product_name: z.string().min(1, {
+    message: 'Name is required.',
   }),
   category: z.string().min(1, {
     message: 'Category is required.',
@@ -40,6 +55,15 @@ const FormSchema = z.object({
   size: z.string().min(1, {
     message: 'Size is required.',
   }),
+  custom_size: z.string().optional(),
+  price: z.coerce // use coerce to cast to string to number https://stackoverflow.com/questions/76878664/react-hook-form-and-zod-inumber-input
+    .number({
+      required_error: 'Price is required.',
+      invalid_type_error: 'Price is required',
+    })
+    .positive({
+      message: 'Price is required...',
+    }),
   confirmed: z.literal(true, {
     errorMap: () => ({ message: 'Confirmation is required' }),
   }),
@@ -50,9 +74,44 @@ interface ModalProps {
   editData: ProductTypes | null
 }
 
+interface RawMaterialListTypes {
+  id: number
+  name: string
+  quantity: number
+  unit: string
+  value: string
+}
+
+interface RawMaterialDropdownTypes {
+  id: number
+  label: string
+  value: string
+}
+
 const AddEditModal = ({ editData, hideModal }: ModalProps) => {
   const { supabase } = useSupabase()
   const { setToast } = useFilter()
+
+  const [showCustomSize, setShowCustomSize] = useState(
+    editData ? (editData.size === 'Custom Size' ? true : false) : false
+  )
+
+  // loading state
+  const [loading, setLoading] = useState(false)
+
+  // Raw Materials
+  const [selectedRawMaterials, setSelectedRawMaterials] = useState<
+    RawMaterialListTypes[] | []
+  >([])
+
+  // Raw Materials Dropdown
+  const [open, setOpen] = useState(false)
+  const [rawMaterialsList, setRawMaterialsList] = useState<
+    RawMaterialListTypes[] | []
+  >([])
+  const [rawMaterialsDropdown, setRawMaterialsDropdown] = useState<
+    RawMaterialDropdownTypes[] | []
+  >([])
 
   // Redux staff
   const globallist = useSelector((state: any) => state.list.value)
@@ -63,6 +122,8 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
     defaultValues: {
       product_name: editData ? editData.name : '',
       size: editData ? editData.size : '',
+      custom_size: editData ? editData.custom_size || '' : '',
+      price: editData ? editData.price || 0 : 0, // add zero to prevent error
       category: editData ? editData.category : '',
     },
   })
@@ -80,6 +141,9 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
       const newData = {
         name: formdata.product_name,
         size: formdata.size,
+        custom_size:
+          formdata.size === 'Custom Size' ? formdata.custom_size : ' ',
+        price: formdata.price,
         category: formdata.category,
         status: 'Active',
       }
@@ -127,6 +191,9 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
       const newData = {
         name: formdata.product_name,
         size: formdata.size,
+        custom_size:
+          formdata.size === 'Custom Size' ? formdata.custom_size : ' ',
+        price: formdata.price,
         category: formdata.category,
       }
 
@@ -169,10 +236,107 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
     }
   }
 
+  const handleSelectMaterial = (value: string) => {
+    if (!rawMaterialsList) return
+
+    const selectedMaterial = rawMaterialsList.find(
+      (p) => p.value.toLowerCase() === value.toLowerCase()
+    )
+
+    if (selectedMaterial) {
+      setSelectedRawMaterials([...selectedRawMaterials, selectedMaterial])
+
+      // remove from dropdown list
+      if (!rawMaterialsDropdown) return
+
+      const updatedList = rawMaterialsDropdown.filter(
+        (p) => p.id !== selectedMaterial.id
+      )
+      setRawMaterialsDropdown(updatedList)
+    }
+  }
+
+  const handleRemoveItem = (raw: RawMaterialListTypes) => {
+    // Return the product to dropdown list
+    setRawMaterialsDropdown([
+      ...rawMaterialsDropdown,
+      {
+        id: raw.id,
+        label: raw.value,
+        value: raw.value,
+      },
+    ])
+
+    // Remove selected products list
+    const updatedList = selectedRawMaterials.filter((p) => p.id !== raw.id)
+    setSelectedRawMaterials(updatedList)
+  }
+
+  const handleChangeQuantity = (value: string, item: RawMaterialListTypes) => {
+    const qty = Number(value)
+
+    const updatedCart = selectedRawMaterials.map((p: RawMaterialListTypes) => {
+      if (p.id === item.id) {
+        return {
+          ...p,
+          quantity: qty,
+        }
+      }
+      return p
+    })
+    setSelectedRawMaterials(updatedCart)
+  }
+
+  const handleSizeChange = (size: string) => {
+    if (size === 'Custom Size') {
+      setShowCustomSize(true)
+    } else {
+      setShowCustomSize(false)
+    }
+  }
+
+  useEffect(() => {
+    // Fetch from database
+    ;(async () => {
+      setLoading(true)
+
+      const { data } = await supabase
+        .from('agriko_rawmaterials')
+        .select()
+        .gt('quantity', 0)
+        .order('name', { ascending: true })
+
+      if (data) {
+        const rawMaterialsArr: RawMaterialListTypes[] = []
+        const rawMaterialsDropdown: RawMaterialDropdownTypes[] = []
+        // Structure the product array
+        data.forEach((item: RawMaterialTypes) => {
+          rawMaterialsArr.push({
+            id: item.id,
+            name: item.name,
+            quantity: 0,
+            unit: item.unit,
+            value: `${item.name} (${item.unit})`,
+          })
+          rawMaterialsDropdown.push({
+            id: item.id,
+            label: `${item.name} (${item.unit})`,
+            value: `${item.name} (${item.unit})`,
+          })
+        })
+
+        setRawMaterialsList(rawMaterialsArr)
+        setRawMaterialsDropdown(rawMaterialsDropdown)
+      }
+
+      setLoading(false)
+    })()
+  }, [])
+
   return (
     <>
       <div className="app__modal_wrapper">
-        <div className="app__modal_wrapper2">
+        <div className="app__modal_wrapper2_large">
           <div className="app__modal_wrapper3">
             <div className="app__modal_header">
               <h5 className="app__modal_header_text">Product Details</h5>
@@ -194,14 +358,13 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
                     control={form.control}
                     name="product_name"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="w-full md:w-1/2">
                         <FormLabel className="app__form_label">
                           Product Name
                         </FormLabel>
                         <FormControl>
                           <Input
                             placeholder="Enter Product Name"
-                            className="w-[340px]"
                             {...field}
                           />
                         </FormControl>
@@ -209,64 +372,192 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
                       </FormItem>
                     )}
                   />
+                  <div className="flex items-start justify-between space-x-2">
+                    <div className="w-1/2 space-y-6">
+                      <FormField
+                        control={form.control}
+                        name="size"
+                        render={({ field }) => (
+                          <FormItem className="w-full">
+                            <FormLabel className="app__form_label">
+                              Size
+                            </FormLabel>
+                            <Select
+                              onValueChange={(value) => {
+                                field.onChange(value)
+                                handleSizeChange(value)
+                              }}
+                              defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select Size" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {productSizes.map((size, index) => (
+                                  <SelectItem
+                                    key={index}
+                                    value={size}>
+                                    {size}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      {showCustomSize && (
+                        <FormField
+                          control={form.control}
+                          name="custom_size"
+                          render={({ field }) => (
+                            <FormItem className="w-full">
+                              <FormLabel className="app__form_label">
+                                Custom Size
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Custom Size"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
+                    <div className="w-1/2">
+                      <FormField
+                        control={form.control}
+                        name="category"
+                        render={({ field }) => (
+                          <FormItem className="w-full">
+                            <FormLabel className="app__form_label">
+                              Category
+                            </FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select Category" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {productCategories.map((category, index) => (
+                                  <SelectItem
+                                    key={index}
+                                    value={category}>
+                                    {category}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
                   <FormField
                     control={form.control}
-                    name="size"
+                    name="price"
                     render={({ field }) => (
-                      <FormItem className="w-[340px]">
-                        <FormLabel className="app__form_label">Size</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select Size" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {productSizes.map((size, index) => (
-                              <SelectItem
-                                key={index}
-                                value={size}>
-                                {size}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      <FormItem className="w-full md:w-1/2">
+                        <FormLabel className="app__form_label">Price</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="any"
+                            placeholder="Enter Price"
+                            className="w-[240px]"
+                            {...field}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="category"
-                    render={({ field }) => (
-                      <FormItem className="w-[340px]">
-                        <FormLabel className="app__form_label">
-                          Category
-                        </FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select Category" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {productCategories.map((category, index) => (
-                              <SelectItem
-                                key={index}
-                                value={category}>
-                                {category}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <Popover
+                    open={open}
+                    onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        className="w-[300px] justify-between app__btn_green hover:!bg-emerald-600 hover:!text-white">
+                        Click to choose Raw Materials
+                        <PlusIcon className="h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder="Search Product..."
+                          className="h-9"
+                        />
+                        <CommandEmpty>No Product found.</CommandEmpty>
+                        <CommandGroup>
+                          {rawMaterialsDropdown.map((item) => (
+                            <CommandItem
+                              key={item.value}
+                              value={item.label}
+                              onSelect={(currentValue) => {
+                                // setValue(
+                                //   currentValue === value ? '' : currentValue
+                                // )
+                                handleSelectMaterial(currentValue)
+                                setOpen(false)
+                              }}>
+                              {item.label}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+
+                  {/* Raw Materils */}
+                  {selectedRawMaterials.length > 0 && (
+                    <table className="app__table">
+                      <thead className="app__thead">
+                        <tr>
+                          <th className="app__th">Raw Material</th>
+                          <th className="app__th">Quantity</th>
+                          <th className="app__th"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedRawMaterials.map((item, idx) => (
+                          <tr
+                            key={idx}
+                            className="app__tr">
+                            <td className="app__td">{item.value}</td>
+                            <td className="app__td">
+                              <input
+                                type="number"
+                                onChange={(e) =>
+                                  handleChangeQuantity(e.target.value, item)
+                                }
+                                className="text-base font-bold outline-none w-20 px-2 py-1 border border-slate-400 rounded-lg"
+                                value={item.quantity}
+                              />
+                            </td>
+                            <td className="app__td">
+                              <X
+                                className="w-6 h-6 text-red-500 cursor-pointer"
+                                onClick={() => handleRemoveItem(item)}
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+
                   <hr />
                   <FormField
                     control={form.control}

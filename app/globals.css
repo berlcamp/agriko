@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 /* Additional styles for the arrow */
+body {
+  @apply !min-w-full
+}
+
 .app__main {
   @apply lg:ml-64 mt-20 pb-14
 }
@@ -40,10 +44,10 @@
   @apply bg-gray-50 text-xs border-b hover:bg-amber-50
 }
 .app__th {
-  @apply py-2 px-2 text-gray-900 align-top
+  @apply py-2 px-2 text-gray-700 align-top
 }
 .app__th_firstcol {
-  @apply py-2 px-2 text-gray-800 font-medium align-top
+  @apply py-2 px-2 text-gray-700 font-medium align-top
 }
 .app__td {
   @apply py-2 px-2 align-top font-normal
@@ -103,10 +107,13 @@
   @apply bg-gray-500 hover:bg-gray-600 border active:bg-gray-500 border-gray-600 font-bold px-2 py-1 text-sm text-white rounded-sm
 }
 .app__btn_red_xs {
-  @apply bg-red-500 hover:bg-red-600 active:bg-red-500 border border-red-600 px-1 py-px text-xs text-white rounded-sm
+  @apply bg-red-500 hover:bg-red-600 active:bg-red-500 border border-red-600 font-medium px-2 py-px text-[11px] text-white rounded-sm
 }
 .app__btn_green_xs {
-  @apply bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-500 border border-emerald-600 font-bold px-2 py-px text-[10px] text-white rounded-sm
+  @apply bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-500 border border-emerald-600 font-medium px-2 py-px text-[11px] text-white rounded-sm
+}
+.app__btn_blue_xs {
+  @apply bg-blue-500 hover:bg-blue-600 active:bg-blue-500 border border-blue-600 font-medium px-2 py-px text-[11px] text-white rounded-sm
 }
 .app__btn_blue {
   @apply bg-blue-500 hover:bg-blue-600 border active:bg-blue-500 border-blue-600 font-bold px-2 py-1 text-xs text-white rounded-sm
@@ -235,7 +242,7 @@
   @apply font-light space-y-1
 }
 .app__form_label {
-  @apply text-gray-600
+  @apply text-gray-600 text-sm font-medium
 }
 .app__form_field_container {
   @apply grid grid-cols-1 gap-4 mb-4
@@ -268,7 +275,7 @@
   @apply items-center text-sm font-medium text-gray-700
 }
 .app__product_grid_content {
-  @apply flex font-bold items-center justify-between space-x-4 w-full
+  @apply flex font-bold items-center justify-center space-x-4 w-full
 }
 .app__product_grid_quantity {
   @apply text-2xl text-gray-700

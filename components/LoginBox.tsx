@@ -1,8 +1,9 @@
 'use client'
 import React, { useState } from 'react'
 
-import { useSupabase } from '@/context/SupabaseProvider'
 import { CustomButton } from '@/components/index'
+import { useSupabase } from '@/context/SupabaseProvider'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 
 // Supabase auth needs to be triggered client-side
@@ -54,10 +55,14 @@ export default function LoginBox() {
         <div className="flex items-start justify-center">
           <div className="bg-white p-4 w-96 rounded-lg shadow-lg">
             <form onSubmit={handleEmailLogin}>
-              <div className="text-center">
-                <h4 className="text-xl font-semibold mt-1 mb-12 pb-1">
-                  Login to your Account
-                </h4>
+              <div className="flex justify-center">
+                <Image
+                  src="/logo.png"
+                  width={140}
+                  height={140}
+                  priority={true}
+                  alt="Logo Agriko"
+                />
               </div>
               {error && (
                 <p className="mb-2 text-red-600 bg-red-100 text-sm px-2 py-1 font-medium">

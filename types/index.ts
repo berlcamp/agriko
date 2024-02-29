@@ -85,7 +85,6 @@ export interface RawMaterialTypes {
 }
 
 export interface FinalProductTypes {
-  id: number
   product_id: number
   quantity: number
   product: ProductTypes
@@ -95,8 +94,10 @@ export interface ProductTypes {
   id: number
   name: string
   size: string
+  custom_size: string
   status: string
   category: string
+  price: number
 }
 
 export interface OrderTypes {
@@ -118,4 +119,33 @@ export interface PTypes {
 export interface OfficeTypes {
   id: string
   name: string
+  type: string
+}
+
+export interface OfficeProductTypes {
+  id: number
+  product_id: number
+  office_id: number
+  quantity: number
+  category: string
+  product: ProductTypes
+}
+
+export interface TransferedProductTypes {
+  product_id: number
+  name: string
+  size: string
+  category: string
+  quantity: number
+}
+
+export interface TransferTransactionTypes {
+  id: number
+  office_id: number
+  status: string
+  memo: string
+  transfer_date: string
+  products: TransferedProductTypes[]
+  transfered_by: string
+  office: OfficeTypes
 }

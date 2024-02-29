@@ -60,8 +60,14 @@ export default function LogsModal({ refCol, refValue, onClose }: ModalProps) {
         <div className="app__modal_wrapper3">
           <div className="app__modal_header">
             <h5 className="app__modal_header_text">Change Logs</h5>
+            <button
+              onClick={onClose}
+              type="button"
+              className="app__modal_header_btn">
+              &times;
+            </button>
           </div>
-          <div className="modal-body relative p-4">
+          <div className="app__modal_body relative p-4">
             <div className="grid grid-cols-1 gap-4 mb-4">
               <div className="w-full">
                 <div className="text-gray-600 text-sm mb-1 dark:text-gray-300">
@@ -79,7 +85,7 @@ export default function LogsModal({ refCol, refValue, onClose }: ModalProps) {
                               (
                               {format(
                                 new Date(item.created_at),
-                                'MMM d, yyyy h:ii a'
+                                'MMM d, yyyy p'
                               )}
                               )
                             </span>

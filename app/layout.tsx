@@ -13,6 +13,7 @@ import { logError } from '@/utils/fetchApi'
 import type { Metadata } from 'next'
 
 import ChooseOfficePage from '@/components/ChooseOfficePage'
+import ErrorPage from '@/components/ErrorPage'
 import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
@@ -51,8 +52,9 @@ export default async function RootLayout({
           'root layout system access',
           'agriko_system_access',
           '',
-          error.message
+          'root layout system access error'
         )
+        console.log('Error #: 1', error.message)
         throw new Error(error.message)
       }
 
@@ -62,12 +64,8 @@ export default async function RootLayout({
         .eq('status', 'Active')
 
       if (error2) {
-        void logError(
-          'root layout agriko_users',
-          'agriko_users',
-          '',
-          error2.message
-        )
+        void logError('root layout agriko_users', 'agriko_users', '', '')
+        console.log('Error #: 2')
         throw new Error(error2.message)
       }
 
@@ -83,6 +81,7 @@ export default async function RootLayout({
           '',
           error3.message
         )
+        console.log('Error #: 3')
         throw new Error(error3.message)
       }
 
@@ -100,6 +99,7 @@ export default async function RootLayout({
           '',
           error4.message
         )
+        console.log('Error #: 4')
         throw new Error(error4.message)
       }
 
@@ -108,8 +108,14 @@ export default async function RootLayout({
       sysOffices = offices
       currUser = user
     } catch (err) {
-      console.log(err)
-      return 'Something went wrong, please contact the system administrator.'
+      console.log('Root layout error:', err)
+      return (
+        <html lang="en">
+          <body className={`${inter.className} relative bg-gray-800`}>
+            <ErrorPage />
+          </body>
+        </html>
+      )
     }
 
     if (currUser && sysOffices && !currUser.active_office_id) {

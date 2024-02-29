@@ -12,7 +12,7 @@ const PerPage = ({
   setPerPageCount,
 }: PropTypes) => {
   return (
-    <div className="flex items-center py-2 px-4 bg-gray-200 border-t border-gray-200 text-gray-500">
+    <div className="flex items-center py-2 px-4 bg-transparent border-t border-gray-200 text-gray-500">
       <div className="flex-1 text-xs">{`Showing ${showingCount} of ${resultsCount} results`}</div>
       <div className="flex items-center space-x-2 text-xs">
         <span>Results per page: </span>

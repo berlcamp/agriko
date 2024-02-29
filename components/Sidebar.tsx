@@ -50,7 +50,8 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                   <Image
                     src="/logo.png"
                     width={120}
-                    height={32}
+                    height={120}
+                    priority={true}
                     alt="Logo Agriko"
                   />
                 </Link>

@@ -140,6 +140,9 @@ const AddEditModal = ({
             </div>
 
             <div className="app__modal_body">
+              <div className="text-center pb-2 mb-2 font-semibold text-gray-700 border-b">
+                {selectedProduct.product_name} {selectedProduct.unit}
+              </div>
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
