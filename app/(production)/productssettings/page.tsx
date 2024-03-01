@@ -20,7 +20,7 @@ import { fetchProducts } from '@/utils/fetchApi'
 import { Menu, Transition } from '@headlessui/react'
 import React, { Fragment, useEffect, useState } from 'react'
 // Types
-import type { ProductTypes } from '@/types/index'
+import type { ProductTypes, RawMaterialTypes } from '@/types/index'
 
 // Redux imports
 import { updateList } from '@/GlobalRedux/Features/listSlice'
@@ -29,6 +29,7 @@ import { ChevronDownIcon, PencilSquareIcon } from '@heroicons/react/20/solid'
 import { AlertTriangle } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import AddEditModal from './AddEditModal'
+import RawMaterials from './RawMaterials'
 
 const Page: React.FC = () => {
   const [loading, setLoading] = useState(false)
@@ -39,6 +40,10 @@ const Page: React.FC = () => {
   const [editData, setEditData] = useState<ProductTypes | null>(null)
 
   const [perPageCount, setPerPageCount] = useState<number>(10)
+
+  // Raw Materials modal
+  const [showRawMaterialsModal, setShowRawMaterialsModal] = useState(false)
+  const [rawMaterials, setRawMaterials] = useState<RawMaterialTypes[] | []>([])
 
   // Confirm modal
   const [showConfirmModal, setShowConfirmModal] = useState('')
@@ -189,6 +194,11 @@ const Page: React.FC = () => {
     }
   }
 
+  const handleViewRawMaterials = (items: RawMaterialTypes[]) => {
+    setShowRawMaterialsModal(true)
+    setRawMaterials(items)
+  }
+
   useEffect(() => {
     setList(globallist)
   }, [globallist])
@@ -245,6 +255,7 @@ const Page: React.FC = () => {
                   <th className="hidden md:table-cell app__th">Price</th>
                   <th className="hidden md:table-cell app__th">Category</th>
                   <th className="hidden md:table-cell app__th">Status</th>
+                  <th className="hidden md:table-cell app__th"></th>
                 </tr>
               </thead>
               <tbody>
@@ -345,6 +356,19 @@ const Page: React.FC = () => {
                                 </span>
                               )}
                             </div>
+                            <div>
+                              {item.raw_materials &&
+                                item.raw_materials.length > 0 && (
+                                  <CustomButton
+                                    containerStyles="app__btn_blue_xs"
+                                    title="View Raw Materials"
+                                    btnType="button"
+                                    handleClick={() =>
+                                      handleViewRawMaterials(item.raw_materials)
+                                    }
+                                  />
+                                )}
+                            </div>
                           </div>
                         </div>
                         {/* End - Mobile View */}
@@ -375,11 +399,27 @@ const Page: React.FC = () => {
                           </span>
                         )}
                       </td>
+                      <td className="hidden md:table-cell app__td">
+                        {item.raw_materials && item.raw_materials.length > 0 ? (
+                          <CustomButton
+                            containerStyles="app__btn_blue_xs"
+                            title="View Raw Materials"
+                            btnType="button"
+                            handleClick={() =>
+                              handleViewRawMaterials(item.raw_materials)
+                            }
+                          />
+                        ) : (
+                          <span className="text-gray-500 italic">
+                            -No Raw Materials-
+                          </span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 {loading && (
                   <TableRowLoading
-                    cols={5}
+                    cols={7}
                     rows={2}
                   />
                 )}
@@ -410,6 +450,15 @@ const Page: React.FC = () => {
           message={confirmMessage}
           onConfirm={HandleOnConfirm}
           onCancel={handleOnCancel}
+        />
+      )}
+      {/* Raw Materials Modal */}
+      {showRawMaterialsModal && (
+        <RawMaterials
+          rawMaterials={rawMaterials}
+          hideModal={() => {
+            setShowRawMaterialsModal(false)
+          }}
         />
       )}
     </>

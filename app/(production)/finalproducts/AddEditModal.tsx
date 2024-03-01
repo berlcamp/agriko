@@ -128,7 +128,9 @@ const AddEditModal = ({
           <div className="app__modal_wrapper3">
             <div className="app__modal_header">
               <h5 className="app__modal_header_text">
-                {addOrAdjust === 'add' ? 'Add Quantity' : 'Adjust Quantity'}
+                {addOrAdjust === 'add'
+                  ? 'Add Final Product'
+                  : 'Adjust Quantity'}
               </h5>
               <button
                 onClick={hideModal}
@@ -154,7 +156,7 @@ const AddEditModal = ({
                       <FormItem>
                         <FormLabel className="app__form_label">
                           {addOrAdjust === 'add'
-                            ? 'Add Quantity'
+                            ? 'Quantity'
                             : 'Adjust Quantity'}
                         </FormLabel>
                         <FormControl>
@@ -166,18 +168,20 @@ const AddEditModal = ({
                           />
                         </FormControl>
                         {addOrAdjust === 'add' ? (
-                          <FormDescription>
+                          <FormDescription className="bg-green-100 border border-green-400 p-2 text-gray-600 text-xs">
                             Adding Quantity will{' '}
-                            <span className="font-bold text-gray-700">
+                            <span className="font-bold underline underline-offset-2 text-black">
                               AUTOMATICALLY
                             </span>{' '}
-                            adjust the quantity of Raw Materials used.
+                            adjust the Raw Materials stocks.
                           </FormDescription>
                         ) : (
-                          <FormDescription>
+                          <FormDescription className="bg-green-100 border border-green-400 p-2 text-gray-600 text-xs">
                             Quantity adjustments will{' '}
-                            <span className="font-bold text-gray-700">NOT</span>{' '}
-                            affect the quantity of Raw Materials.
+                            <span className="font-bold underline underline-offset-2 text-black">
+                              NOT
+                            </span>{' '}
+                            affect the Raw Materials stocks.
                           </FormDescription>
                         )}
                         <FormMessage />

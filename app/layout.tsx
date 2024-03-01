@@ -14,8 +14,8 @@ import type { Metadata } from 'next'
 
 import ChooseOfficePage from '@/components/ChooseOfficePage'
 import ErrorPage from '@/components/ErrorPage'
-import { Inter } from 'next/font/google'
-const inter = Inter({ subsets: ['latin'] })
+// import { Inter } from 'next/font/google'
+// const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Agriko',
@@ -111,7 +111,7 @@ export default async function RootLayout({
       console.log('Root layout error:', err)
       return (
         <html lang="en">
-          <body className={`${inter.className} relative bg-gray-800`}>
+          <body className={`relative bg-gray-800`}>
             <ErrorPage />
           </body>
         </html>
@@ -121,7 +121,7 @@ export default async function RootLayout({
     if (currUser && sysOffices && !currUser.active_office_id) {
       return (
         <html lang="en">
-          <body className={`${inter.className} relative bg-gray-800`}>
+          <body className={`relative bg-gray-800`}>
             <ChooseOfficePage
               currUser={currUser}
               sysOffices={sysOffices}
@@ -134,7 +134,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${inter.className} relative bg-gray-200`}>
+      <body className={`relative bg-gray-200`}>
         <SupabaseProvider
           systemAccess={sysAccess}
           session={session}

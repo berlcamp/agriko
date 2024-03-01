@@ -5,11 +5,34 @@ import { AccountTypes } from '@/types'
 import { ListChecks, ShoppingBasket, ShoppingCart } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 export default function MainSideBar() {
   const currentRoute = usePathname()
-  const { currentUser } = useSupabase()
+  const { currentUser, supabase } = useSupabase()
   const activeUser: AccountTypes = currentUser
+
+  // Counters
+  const [incomingCount, setIncomingCount] = useState('')
+
+  const counter = async () => {
+    // Incoming Products Counter
+    const { count } = await supabase
+      .from('agriko_transfer_transactions')
+      .select('id', { count: 'exact' })
+      .eq('status', 'To Receive')
+      .eq('office_id', activeUser.active_office_id)
+
+    if (count > 0) {
+      setIncomingCount(count)
+    }
+  }
+
+  useEffect(() => {
+    if (activeUser.active_office_id.toString() !== '1') {
+      void counter()
+    }
+  }, [])
 
   return (
     <div className="px-2">
@@ -25,9 +48,9 @@ export default function MainSideBar() {
             </li>
             <li>
               <Link
-                href="/order"
+                href="/neworder"
                 className={`app__menu_link ${
-                  currentRoute === '/order' ? 'app_menu_link_active' : ''
+                  currentRoute === '/neworder' ? 'app_menu_link_active' : ''
                 }`}>
                 <span className="flex-1 ml-3 whitespace-nowrap">New Order</span>
               </Link>
@@ -75,6 +98,11 @@ export default function MainSideBar() {
                 <span className="flex-1 ml-3 whitespace-nowrap">
                   Incoming Products
                 </span>
+                {incomingCount !== '' && (
+                  <span className="inline-flex items-center justify-center rounded-full bg-red-500 w-5 h-5">
+                    <span className="text-white text-xs">{incomingCount}</span>
+                  </span>
+                )}
               </Link>
             </li>
           </ul>
@@ -139,7 +167,9 @@ export default function MainSideBar() {
               <Link
                 href="/productssettings"
                 className={`app__menu_link ${
-                  currentRoute === '/products' ? 'app_menu_link_active' : ''
+                  currentRoute === '/productssettings'
+                    ? 'app_menu_link_active'
+                    : ''
                 }`}>
                 <span className="flex-1 ml-3 whitespace-nowrap">
                   Products Settings

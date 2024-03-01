@@ -43,7 +43,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
               </div>
             </li>
           </ul>
-          <div className="px-2 lg:mt-12">
+          <div className="px-2 lg:mt-10">
             <div>
               <div className="flex items-center justify-center relative">
                 <Link href="/">

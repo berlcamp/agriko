@@ -74,14 +74,6 @@ interface ModalProps {
   editData: ProductTypes | null
 }
 
-interface RawMaterialListTypes {
-  id: number
-  name: string
-  quantity: number
-  unit: string
-  value: string
-}
-
 interface RawMaterialDropdownTypes {
   id: number
   label: string
@@ -101,13 +93,13 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
 
   // Raw Materials
   const [selectedRawMaterials, setSelectedRawMaterials] = useState<
-    RawMaterialListTypes[] | []
-  >([])
+    RawMaterialTypes[] | []
+  >(editData ? editData.raw_materials || [] : [])
 
   // Raw Materials Dropdown
   const [open, setOpen] = useState(false)
   const [rawMaterialsList, setRawMaterialsList] = useState<
-    RawMaterialListTypes[] | []
+    RawMaterialTypes[] | []
   >([])
   const [rawMaterialsDropdown, setRawMaterialsDropdown] = useState<
     RawMaterialDropdownTypes[] | []
@@ -138,6 +130,11 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
 
   const handleCreate = async (formdata: z.infer<typeof FormSchema>) => {
     try {
+      //Remove raw materials with zero quantity
+      const rawMaterialsArr = selectedRawMaterials.filter(
+        (p) => p.quantity.toString() !== '0'
+      )
+
       const newData = {
         name: formdata.product_name,
         size: formdata.size,
@@ -145,6 +142,7 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
           formdata.size === 'Custom Size' ? formdata.custom_size : ' ',
         price: formdata.price,
         category: formdata.category,
+        raw_materials: rawMaterialsArr,
         status: 'Active',
       }
 
@@ -188,12 +186,18 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
     if (!editData) return
 
     try {
+      //Remove raw materials with zero quantity
+      const rawMaterialsArr = selectedRawMaterials.filter(
+        (p) => p.quantity.toString() !== '0'
+      )
+
       const newData = {
         name: formdata.product_name,
         size: formdata.size,
         custom_size:
           formdata.size === 'Custom Size' ? formdata.custom_size : ' ',
         price: formdata.price,
+        raw_materials: rawMaterialsArr,
         category: formdata.category,
       }
 
@@ -256,7 +260,7 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
     }
   }
 
-  const handleRemoveItem = (raw: RawMaterialListTypes) => {
+  const handleRemoveItem = (raw: RawMaterialTypes) => {
     // Return the product to dropdown list
     setRawMaterialsDropdown([
       ...rawMaterialsDropdown,
@@ -272,10 +276,10 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
     setSelectedRawMaterials(updatedList)
   }
 
-  const handleChangeQuantity = (value: string, item: RawMaterialListTypes) => {
+  const handleChangeQuantity = (value: string, item: RawMaterialTypes) => {
     const qty = Number(value)
 
-    const updatedCart = selectedRawMaterials.map((p: RawMaterialListTypes) => {
+    const updatedCart = selectedRawMaterials.map((p: RawMaterialTypes) => {
       if (p.id === item.id) {
         return {
           ...p,
@@ -307,8 +311,9 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
         .order('name', { ascending: true })
 
       if (data) {
-        const rawMaterialsArr: RawMaterialListTypes[] = []
+        const rawMaterialsArr: RawMaterialTypes[] = []
         const rawMaterialsDropdown: RawMaterialDropdownTypes[] = []
+
         // Structure the product array
         data.forEach((item: RawMaterialTypes) => {
           rawMaterialsArr.push({
@@ -318,11 +323,19 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
             unit: item.unit,
             value: `${item.name} (${item.unit})`,
           })
-          rawMaterialsDropdown.push({
-            id: item.id,
-            label: `${item.name} (${item.unit})`,
-            value: `${item.name} (${item.unit})`,
-          })
+
+          // Do not display items that are already selected
+          const findInSelected = editData
+            ? editData.raw_materials?.find((rm) => rm.id === item.id)
+            : undefined
+
+          if (!findInSelected) {
+            rawMaterialsDropdown.push({
+              id: item.id,
+              label: `${item.name} (${item.unit})`,
+              value: `${item.name} (${item.unit})`,
+            })
+          }
         })
 
         setRawMaterialsList(rawMaterialsArr)
@@ -557,6 +570,11 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
                       </tbody>
                     </table>
                   )}
+
+                  <div className="bg-green-100 border border-green-400 p-2 text-gray-700 text-xs">
+                    The Raw Materials stock is automatically updated as soon as
+                    the production of the final product is completed.
+                  </div>
 
                   <hr />
                   <FormField

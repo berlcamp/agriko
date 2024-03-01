@@ -216,7 +216,9 @@ const Page: React.FC = () => {
                                       <PlusCircledIcon className="w-5 h-5 text-green-700" />
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <p className="font-light">Add Quantity</p>
+                                      <p className="font-light">
+                                        Add Final Product
+                                      </p>
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
@@ -244,7 +246,7 @@ const Page: React.FC = () => {
                         <th className="app__th">Product Name</th>
                         <th className="app__th">Size</th>
                         <th className="app__th">Category</th>
-                        <th className="app__th">Quantity</th>
+                        <th className="app__th">Available Stocks</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -284,7 +286,7 @@ const Page: React.FC = () => {
                                             }
                                             className="app__dropdown_item">
                                             <PlusCircleIcon className="w-4 h-4 text-green-700" />
-                                            <span>Add Quantity</span>
+                                            <span>Add Final Product</span>
                                           </div>
                                         </Menu.Item>
                                         <Menu.Item>

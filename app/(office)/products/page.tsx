@@ -75,6 +75,7 @@ const Page: React.FC = () => {
         .from('agriko_products')
         .select('*')
         .eq('status', 'Active')
+        .order('id', { ascending: true })
 
       const allProducts: ProductTypes[] | [] = allProductsData
       const officeProducts: OfficeProductTypes[] | [] = officeProductsData
@@ -222,7 +223,7 @@ const Page: React.FC = () => {
                         <th className="app__th">Product Name</th>
                         <th className="app__th">Size</th>
                         <th className="app__th">Category</th>
-                        <th className="app__th">Quantity</th>
+                        <th className="app__th">Available Stocks</th>
                       </tr>
                     </thead>
                     <tbody>

@@ -192,7 +192,7 @@ const Page: React.FC = () => {
                         <th className="app__th"></th>
                         <th className="app__th">Raw Material</th>
                         <th className="app__th">Unit</th>
-                        <th className="app__th">Quantity</th>
+                        <th className="app__th">Available Stocks</th>
                       </tr>
                     </thead>
                     <tbody>

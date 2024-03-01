@@ -78,10 +78,11 @@ export interface LogMessageTypes {
 export interface RawMaterialTypes {
   id: number
   name: string
-  quantity: string
+  quantity: number
   unit: string
-  quantity_warning: number
-  status: string
+  quantity_warning?: number
+  status?: string
+  value: string
 }
 
 export interface FinalProductTypes {
@@ -98,6 +99,7 @@ export interface ProductTypes {
   status: string
   category: string
   price: number
+  raw_materials: RawMaterialTypes[] | []
 }
 
 export interface OrderTypes {
@@ -148,4 +150,35 @@ export interface TransferTransactionTypes {
   products: TransferedProductTypes[]
   transfered_by: string
   office: OfficeTypes
+}
+
+export interface CustomerTypes {
+  id: number
+  name: string
+  address: string
+}
+
+export interface OrderTransactionTypes {
+  customer_id: number
+  transaction_date: string
+  cashier_id: string
+  total_amount: number
+  office_id: string
+  customer?: CustomerTypes
+  products_ordered: number[]
+  products?: OrderedProductTypes[]
+}
+
+export interface OrderedProductTypes {
+  id?: number
+  transaction_date: string
+  transaction_id: number
+  product_id: number
+  quantity: number
+  total_amount: number
+  cashier_id: string
+  office_id: string
+  product_category: string
+  product_size: string
+  product_price: number
 }

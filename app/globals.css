@@ -224,7 +224,7 @@ body {
   @apply flex items-center p-1 text-xs font-light rounded-lg text-gray-300 hover:bg-gray-600 cursor-pointer
 }
 .app__menu_link {
-  @apply flex items-center p-2 text-[14px] font-light rounded-lg text-gray-300  hover:bg-gray-600 cursor-pointer
+  @apply flex items-center p-2 text-[13px] font-light rounded-lg text-slate-300  hover:bg-gray-600 cursor-pointer
 }
 .app_menu_link_active {
   @apply bg-gray-700
@@ -233,7 +233,7 @@ body {
   @apply w-full bg-white md:w-52 md:h-screen border-r border-b
 }
 .app__modal_menu_link {
-  @apply text-xs p-2 text-gray-700  hover:bg-gray-400 m-1 rounded-lg font-medium cursor-pointer
+  @apply text-xs p-2 text-gray-700 hover:bg-gray-400 m-1 rounded-lg font-medium cursor-pointer
 }
 .app__modal_menu_link_active {
   @apply text-xs p-2 text-gray-700 bg-gray-300 m-1 rounded-lg font-bold cursor-pointer
