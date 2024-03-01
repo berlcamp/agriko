@@ -19,7 +19,12 @@ import {
 import { productCategories, superAdmins } from '@/constants'
 import { useFilter } from '@/context/FilterContext'
 import { useSupabase } from '@/context/SupabaseProvider'
-import type { OfficeProductTypes, PTypes, ProductTypes } from '@/types'
+import type {
+  AccountTypes,
+  OfficeProductTypes,
+  PTypes,
+  ProductTypes,
+} from '@/types'
 import { Menu, Transition } from '@headlessui/react'
 import {
   ChevronDownIcon,
@@ -52,8 +57,10 @@ const Page: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<PTypes | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
 
-  const { supabase, session } = useSupabase()
+  const { supabase, session, currentUser } = useSupabase()
   const { hasAccess } = useFilter()
+
+  const activeUser: AccountTypes = currentUser
 
   const router = useRouter()
 
@@ -70,6 +77,7 @@ const Page: React.FC = () => {
       const { data: officeProductsData } = await supabase
         .from('agriko_office_products')
         .select('*, product:product_id(*)')
+        .eq('office_id', activeUser.active_office_id)
 
       const { data: allProductsData } = await supabase
         .from('agriko_products')
@@ -258,6 +266,16 @@ const Page: React.FC = () => {
                                       <div className="py-1">
                                         <Menu.Item>
                                           <div
+                                            onClick={() =>
+                                              handleAdjustQuantity(product)
+                                            }
+                                            className="app__dropdown_item">
+                                            <PencilSquareIcon className="w-4 h-4 text-gray-700" />
+                                            <span>Adjust Quantity</span>
+                                          </div>
+                                        </Menu.Item>
+                                        <Menu.Item>
+                                          <div
                                             onClick={() => {
                                               setShowLogsModal(true)
                                               setSelectedProduct(product)
@@ -273,9 +291,7 @@ const Page: React.FC = () => {
                                 </Menu>
                               </td>
                               <th className="app__th_firstcol">
-                                <div>
-                                  {product.product_name} {product.id}
-                                </div>
+                                <div>{product.product_name}</div>
                               </th>
                               <td className="app__td">
                                 <div>{product.unit}</div>

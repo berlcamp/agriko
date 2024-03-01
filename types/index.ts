@@ -116,6 +116,7 @@ export interface PTypes {
   unit: string
   quantity: number
   id: number
+  raw_materials: RawMaterialTypes[]
 }
 
 export interface OfficeTypes {
@@ -166,7 +167,7 @@ export interface OrderTransactionTypes {
   office_id: string
   customer?: CustomerTypes
   products_ordered: number[]
-  products?: OrderedProductTypes[]
+  agriko_ordered_products?: OrderedProductTypes[]
 }
 
 export interface OrderedProductTypes {
@@ -181,4 +182,5 @@ export interface OrderedProductTypes {
   product_category: string
   product_size: string
   product_price: number
+  product_name: string
 }

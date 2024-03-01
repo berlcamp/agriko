@@ -18,7 +18,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 // Redux imports
 import { useFilter } from '@/context/FilterContext'
-import { PTypes } from '@/types'
+import { PTypes, RawMaterialTypes } from '@/types'
 import { logError } from '@/utils/fetchApi'
 import { handleLogChanges } from '@/utils/text-helper'
 
@@ -38,6 +38,18 @@ const FormSchema = z.object({
     errorMap: () => ({ message: 'Confirmation is required' }),
   }),
 })
+
+interface UpsertArrayTypes {
+  id: number
+  quantity: number
+}
+
+interface InsertLogArray {
+  user_id: string
+  raw_material_id: number
+  custom_message: string
+  log: any
+}
 
 interface ModalProps {
   hideModal: () => void
@@ -114,8 +126,97 @@ const AddEditModal = ({
       // pop up the success message
       setToast('success', 'Successfully Save')
 
+      // Update Raw Materials stocks
+      await handleUpdateRawMaterialStock(formdata)
+
       // hide the modal
       hideModal()
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const handleUpdateRawMaterialStock = async (
+    formdata: z.infer<typeof FormSchema>
+  ) => {
+    if (
+      !selectedProduct.raw_materials ||
+      selectedProduct.raw_materials.length === 0
+    ) {
+      return
+    }
+
+    const rawRaterials = selectedProduct.raw_materials
+
+    try {
+      const rmIds: number[] = []
+
+      rawRaterials.forEach((rm) => {
+        rmIds.push(rm.id)
+      })
+
+      // Get all in-stock Raw Materials
+      const { data: inStockRawData } = await supabase
+        .from('agriko_rawmaterials')
+        .select()
+        .in('id', rmIds)
+
+      const inStockRawMaterials: RawMaterialTypes[] | [] = inStockRawData
+
+      // Create upsertArray
+      const upsertArray: UpsertArrayTypes[] = []
+      const insertLogArray: InsertLogArray[] = []
+
+      rawRaterials.forEach((rm) => {
+        const inStock = inStockRawMaterials.find(
+          (s) => s.id.toString() === rm.id.toString()
+        )
+
+        if (inStock) {
+          // upsert array
+          upsertArray.push({
+            id: rm.id,
+            quantity:
+              Number(inStock.quantity) -
+              Number(rm.quantity) * Number(formdata.quantity),
+          })
+          // Insert log array
+          insertLogArray.push({
+            log: [],
+            user_id: session.user.id,
+            raw_material_id: rm.id,
+            custom_message: `${
+              formdata.quantity
+            } Final product/s finished, deducted ${
+              Number(rm.quantity) * Number(formdata.quantity)
+            } item/s to this raw material.`,
+          })
+        }
+      })
+
+      // Execut upsert
+      const { error: error2 } = await supabase
+        .from('agriko_rawmaterials')
+        .upsert(upsertArray)
+
+      if (error2) {
+        void logError(
+          'Update raw materials stocks after add final product',
+          'agriko_office_products',
+          JSON.stringify(upsertArray),
+          'Upsert error'
+        )
+        setToast(
+          'error',
+          'Saving failed, please reload the page or contact Berl.'
+        )
+        throw new Error(error2.message)
+      }
+
+      // Create logs
+      if (insertLogArray.length > 0) {
+        await supabase.from('agriko_change_logs').insert(insertLogArray)
+      }
     } catch (e) {
       console.error(e)
     }
@@ -169,7 +270,7 @@ const AddEditModal = ({
                         </FormControl>
                         {addOrAdjust === 'add' ? (
                           <FormDescription className="bg-green-100 border border-green-400 p-2 text-gray-600 text-xs">
-                            Adding Quantity will{' '}
+                            Adding Final Product will{' '}
                             <span className="font-bold underline underline-offset-2 text-black">
                               AUTOMATICALLY
                             </span>{' '}
@@ -198,7 +299,7 @@ const AddEditModal = ({
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Remarks"
+                            placeholder="Write Remarks (optional)"
                             className="w-full"
                             {...field}
                           />

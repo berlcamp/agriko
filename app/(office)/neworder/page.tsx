@@ -1,4 +1,5 @@
 'use client'
+import SearchCustomerInput from '@/components/SearchCustomerInput'
 import {
   CustomButton,
   MainSideBar,
@@ -40,11 +41,9 @@ import {
   OrderedProductTypes,
 } from '@/types'
 import { logError } from '@/utils/fetchApi'
-import { cn } from '@/utils/shadcn'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CaretSortIcon } from '@radix-ui/react-icons'
 import { format } from 'date-fns'
-import { CheckIcon, PlusIcon, X } from 'lucide-react'
+import { PlusIcon, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { TbCurrencyPeso } from 'react-icons/tb'
@@ -70,17 +69,28 @@ interface ProductDropdownTypes {
 }
 
 interface OldCustomerValues {
-  customer_id: number
-  customer_value: string
+  customer_id: string
+  name_address: string
+}
+
+interface UpsertArrayTypes {
+  id: number
+  quantity: number
+}
+interface InsertLogArray {
+  user_id: string
+  office_product_id: number
+  custom_message: string
+  log: any
 }
 
 const FormSchema = z.object({
   new_customer: z.string().min(1, {
-    message: 'Name is required.',
+    message: 'Customer Name is required.',
   }),
   new_customer_address: z.string().optional(),
-  old_customer: z.string().min(1, {
-    message: 'Name is required.',
+  old_customer_id: z.string().min(1, {
+    message: 'Customer Name is required.',
   }),
   cash: z.coerce // use coerce to cast to string to number https://stackoverflow.com/questions/76878664/react-hook-form-and-zod-inumber-input
     .number({
@@ -108,6 +118,7 @@ export default function Page() {
   const [change, setChange] = useState(0)
   const [isNewCustomer, setIsNewCustomer] = useState(true)
   const [oldCustomers, setOldCustomers] = useState<OldCustomerValues[] | []>([])
+  const [oldCustomerId, setOldCustomerId] = useState('')
 
   // Select product error
   const [productError, setProductError] = useState('')
@@ -135,7 +146,7 @@ export default function Page() {
     defaultValues: {
       new_customer: '',
       new_customer_address: '',
-      old_customer: ' ',
+      old_customer_id: ' ',
       cash: 0,
     },
   })
@@ -150,6 +161,7 @@ export default function Page() {
         const newCustomerArray = {
           name: data.new_customer,
           address: data.new_customer_address,
+          office_id: activeUser.active_office_id,
         }
         const { data: newCustomer, error } = await supabase
           .from('agriko_customers')
@@ -167,9 +179,7 @@ export default function Page() {
         }
         customerId = newCustomer[0].id
       } else {
-        customerId = oldCustomers.find(
-          (c) => c.customer_value === data.old_customer
-        )?.customer_id
+        customerId = oldCustomerId
       }
       // End - Store the customer
 
@@ -218,6 +228,7 @@ export default function Page() {
           product_category: p.category,
           product_size: p.size,
           product_price: p.price,
+          product_name: p.product_name,
         })
       })
 
@@ -236,9 +247,82 @@ export default function Page() {
       }
       // End - Store ordered products
 
+      // Update Inventory of office products
+      await handleUpdateProductsStock()
+
       setToast('success', 'Successfully completed order transaction.')
     } catch (err) {
       console.error(err)
+    }
+  }
+
+  const handleUpdateProductsStock = async () => {
+    try {
+      const pIds: number[] = []
+      selectedProducts.forEach((p) => {
+        pIds.push(p.product_id)
+      })
+
+      // Get all in-stock products matching transfered products
+      const { data: inStockProductsData } = await supabase
+        .from('agriko_office_products')
+        .select()
+        .eq('office_id', activeUser.active_office_id)
+        .in('product_id', pIds)
+
+      const inStockProducts: OfficeProductTypes[] | [] = inStockProductsData
+
+      // Create upsertArray
+      const upsertArray: UpsertArrayTypes[] = []
+      const insertLogArray: InsertLogArray[] = []
+      selectedProducts?.forEach((selProd) => {
+        const inStockProduct = inStockProducts.find(
+          (s) => s.product_id.toString() === selProd.product_id.toString()
+        )
+
+        if (inStockProduct) {
+          // Upsert
+          upsertArray.push({
+            id: inStockProduct.id,
+            quantity:
+              Number(inStockProduct.quantity) - Number(selProd.order_quantity),
+          })
+          // Insert log array
+          insertLogArray.push({
+            log: [],
+            user_id: session.user.id,
+            office_product_id: inStockProduct.id,
+            custom_message: `Customer purchased ${selProd.order_quantity} item/s of this product.`,
+          })
+        }
+      })
+
+      // Execut upsert
+      const { error: error2 } = await supabase
+        .from('agriko_office_products')
+        .upsert(upsertArray)
+        .select()
+
+      if (error2) {
+        void logError(
+          'Receive Products Upsert',
+          'agriko_office_products',
+          JSON.stringify(upsertArray),
+          'Upsert error'
+        )
+        setToast(
+          'error',
+          'Saving failed, please reload the page or contact Berl.'
+        )
+        throw new Error(error2.message)
+      }
+
+      // Create logs
+      if (insertLogArray.length > 0) {
+        await supabase.from('agriko_change_logs').insert(insertLogArray)
+      }
+    } catch (e) {
+      console.error(e)
     }
   }
 
@@ -332,6 +416,7 @@ export default function Page() {
         .from('agriko_office_products')
         .select('*, product: product_id(*)')
         .gt('quantity', 0)
+        .eq('office_id', activeUser.active_office_id)
         .order('product_id', { ascending: true })
 
       if (data) {
@@ -370,11 +455,13 @@ export default function Page() {
       const { data: customers } = await supabase
         .from('agriko_customers')
         .select()
+        .eq('office_id', activeUser.active_office_id)
+
       if (customers) {
         const oldCust: any = []
         customers.forEach((c: CustomerTypes) => {
           oldCust.push({
-            customer_value: `${c.name} ${c.address}`,
+            name_address: `${c.name} - ${c.address} #${c.id}`,
             customer_id: c.id,
           })
         })
@@ -408,7 +495,7 @@ export default function Page() {
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-full justify-between text-base text-slate-700 bg-slate-200 hover:bg-slate-300 border-slate-400">
+                    className="w-full justify-between !py-8 text-lg text-slate-700 bg-slate-200 hover:bg-slate-300 border-slate-400">
                     Click to choose products
                     <PlusIcon className="h-5 w-5" />
                   </Button>
@@ -546,7 +633,7 @@ export default function Page() {
                         <TabsTrigger
                           value="new"
                           onClick={() => {
-                            form.setValue('old_customer', ' ')
+                            form.setValue('old_customer_id', ' ')
                             form.setValue('new_customer', '')
                             setIsNewCustomer(true)
                           }}
@@ -556,7 +643,7 @@ export default function Page() {
                         <TabsTrigger
                           value="old"
                           onClick={() => {
-                            form.setValue('old_customer', '')
+                            form.setValue('old_customer_id', '')
                             form.setValue('new_customer', ' ')
                             setIsNewCustomer(false)
                           }}
@@ -573,7 +660,7 @@ export default function Page() {
                           render={({ field }) => (
                             <FormItem className="w-full">
                               <FormLabel className="app__form_label">
-                                Customer Name
+                                New Customer Name
                               </FormLabel>
                               <FormControl>
                                 <Input
@@ -609,70 +696,22 @@ export default function Page() {
                         className="px-4 mt-4">
                         <FormField
                           control={form.control}
-                          name="old_customer"
-                          render={({ field }) => (
+                          name="old_customer_id"
+                          render={() => (
                             <FormItem className="w-full">
                               <FormLabel className="app__form_label">
                                 Customer Name
                               </FormLabel>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <FormControl>
-                                    <Button
-                                      variant="outline"
-                                      role="combobox"
-                                      className={cn(
-                                        'w-full justify-between !text-gray-600',
-                                        !field.value && 'text-muted-foreground'
-                                      )}>
-                                      {field.value && field.value !== ' '
-                                        ? `${
-                                            oldCustomers.find(
-                                              (customer) =>
-                                                customer.customer_value ===
-                                                field.value
-                                            )?.customer_value
-                                          }`
-                                        : 'Search Customer'}
-                                      <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                  </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[250px] p-0">
-                                  <Command>
-                                    <CommandInput
-                                      placeholder="Search Customer..."
-                                      className="h-9"
-                                    />
-                                    <CommandEmpty>
-                                      Customer not found.
-                                    </CommandEmpty>
-                                    <CommandGroup>
-                                      {oldCustomers.map((c, idx) => (
-                                        <CommandItem
-                                          value={c.customer_value}
-                                          key={idx}
-                                          onSelect={() => {
-                                            form.setValue(
-                                              'old_customer',
-                                              c.customer_value
-                                            )
-                                          }}>
-                                          {c.customer_value}
-                                          <CheckIcon
-                                            className={cn(
-                                              'ml-auto h-4 w-4',
-                                              c.customer_value === field.value
-                                                ? 'opacity-100'
-                                                : 'opacity-0'
-                                            )}
-                                          />
-                                        </CommandItem>
-                                      ))}
-                                    </CommandGroup>
-                                  </Command>
-                                </PopoverContent>
-                              </Popover>
+                              <SearchCustomerInput
+                                customers={oldCustomers}
+                                handleSelectedId={(selected) => {
+                                  form.setValue(
+                                    'old_customer_id',
+                                    selected.toString()
+                                  )
+                                  setOldCustomerId(selected)
+                                }}
+                              />
                               <FormMessage />
                             </FormItem>
                           )}
@@ -754,17 +793,15 @@ export default function Page() {
                           isDisabled={form.formState.isSubmitting}
                           title={
                             form.formState.isSubmitting
-                              ? 'Saving...'
-                              : 'Complete Purchase'
+                              ? 'Processing..'
+                              : 'Complete'
                           }
                           containerStyles="bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-500 border border-emerald-600 font-bold px-2 py-1 text-base text-white rounded-sm"
                         />
                         <CustomButton
                           btnType="submit"
                           isDisabled={form.formState.isSubmitting}
-                          title={
-                            form.formState.isSubmitting ? 'Saving...' : 'Cancel'
-                          }
+                          title="Cancel"
                           handleClick={() => {
                             setSelectedProducts([])
                             setCartTotal(0)

@@ -142,6 +142,51 @@ export async function fetchTransfers (filters: { filterOffice?: string, filterDa
   }
 }
 
+export async function fetchOrderTransactions (filters: { filterOffice?: string, filterCustomer?: string | undefined, filterDate?: Date | undefined }, perPageCount: number, rangeFrom: number) {
+  try {
+    let query = supabase
+      .from('agriko_order_transactions')
+      .select('*, customer:customer_id(*), agriko_ordered_products(*)', { count: 'exact' })
+
+
+    // Filter date
+    if (filters.filterDate) {
+      query = query.eq('transaction_date', format(new Date(filters.filterDate), 'yyyy-MM-dd'))
+    }
+
+    // Filter Customer
+    if (filters.filterCustomer) {
+      query = query.eq('customer_id', filters.filterCustomer)
+    }
+
+    // Filter office
+    if (filters.filterOffice) {
+      query = query.eq('office_id', filters.filterOffice)
+    }
+
+    // Per Page from context
+    const from = rangeFrom
+    const to = from + (perPageCount - 1)
+
+    // Per Page from context
+    query = query.range(from, to)
+
+    // Order By
+    query = query.order('id', { ascending: false })
+
+    const { data, error, count } = await query
+
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    return { data, count }
+  } catch (error) {
+    console.error('fetch order transactions error', error)
+    return { data: [], count: 0 }
+  }
+}
+
 export async function logError (transaction: string, table: string, data: string, error: string) {
   await supabase
     .from('error_logs')

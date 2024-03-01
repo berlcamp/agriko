@@ -133,17 +133,20 @@ body {
 .app__input_noborder {
   @apply w-full text-sm py-px px-2 text-gray-600 border-gray-300 rounded-sm focus:ring-0 focus:outline-none
 }
+.app__search_customer_input {
+  @apply flex h-10 w-full border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800 dark:bg-slate-950 dark:ring-offset-slate-950 dark:placeholder:text-slate-400 dark:focus-visible:ring-slate-100
+}
 .app__search_user_results_container {
-  @apply absolute top-7 border border-gray-300 left-0 z-50 w-96 bg-gray-50
+  @apply absolute top-7 border border-gray-300 left-0 z-50 bg-slate-200
 }
 .app__search_user_results {
-  @apply px-1 py-2 w-full text-gray-700 cursor-pointer hover:bg-gray-200 text-sm
+  @apply px-1 py-2 text-gray-700 cursor-pointer hover:bg-slate-300 text-sm
 }
 .app__selected_users_container {
-  @apply bg-white p-1 border border-gray-300 rounded-sm
+  @apply bg-white
 }
 .app__selected_user {
-  @apply inline-flex mr-2 items-center text-sm  border border-gray-400 rounded-sm px-1 bg-gray-300
+  @apply inline-flex mr-2 items-center text-sm  border border-gray-400 rounded-sm px-1 bg-slate-200
 }
 .app__error_message {
   @apply mt-1 text-xs text-red-600 font-bold

@@ -54,9 +54,6 @@ const Page: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<PTypes | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
 
-  // Transfer modal
-  const [showTransferModal, setShowTransferModal] = useState(false)
-
   const { supabase, session } = useSupabase()
   const { hasAccess } = useFilter()
 
@@ -117,6 +114,7 @@ const Page: React.FC = () => {
               product_name: p.name,
               unit: p.size === 'Custom Size' ? p.custom_size : p.size,
               quantity: sumOfQuantities,
+              raw_materials: p.raw_materials,
             })
           })
           // If category has products, add them to categoryArr
