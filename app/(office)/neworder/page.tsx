@@ -39,6 +39,7 @@ import {
   OfficeProductTypes,
   OrderTransactionTypes,
   OrderedProductTypes,
+  PurchasedProductsTypes,
 } from '@/types'
 import { logError } from '@/utils/fetchApi'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -48,6 +49,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { TbCurrencyPeso } from 'react-icons/tb'
 import { z } from 'zod'
+import ReceiptModal from './ReceiptModal'
 
 interface ProductListTypes {
   product_id: number
@@ -57,6 +59,8 @@ interface ProductListTypes {
   category: string
   size: string
   price: number
+  discount_type: string
+  discounted_price: number
   sub_total: number
   value: string
 }
@@ -64,6 +68,8 @@ interface ProductListTypes {
 interface ProductDropdownTypes {
   product_id: number
   price: number
+  discount_type: string
+  discounted_price: number
   label: string
   value: string
 }
@@ -111,11 +117,18 @@ export default function Page() {
 
   const activeUser: AccountTypes = currentUser
 
+  // Receipt modal
+  const [showReceiptModal, setShowReceiptModal] = useState(false)
+  const [orderedProducts, setOrderedProducts] = useState<
+    OrderedProductTypes[] | []
+  >([])
+
   // Cart
   const [cartTotal, setCartTotal] = useState(0)
 
   // Checkout
   const [change, setChange] = useState(0)
+  const [customerCash, setCustomerCash] = useState(0)
   const [isNewCustomer, setIsNewCustomer] = useState(true)
   const [oldCustomers, setOldCustomers] = useState<OldCustomerValues[] | []>([])
   const [oldCustomerId, setOldCustomerId] = useState('')
@@ -132,6 +145,9 @@ export default function Page() {
 
   // Products Dropdown
   const [open, setOpen] = useState(false)
+  const [productsDropdownOriginal, setProductsDropdownOriginal] = useState<
+    ProductDropdownTypes[] | []
+  >([])
   const [productsDropdown, setProductsDropdown] = useState<
     ProductDropdownTypes[] | []
   >([])
@@ -184,9 +200,16 @@ export default function Page() {
       // End - Store the customer
 
       // Start - Store the transaction
-      const productIdsOrdered: number[] = []
+      const productIdsOrdered: PurchasedProductsTypes[] = []
       selectedProducts.forEach((p) => {
-        productIdsOrdered.push(p.product_id)
+        productIdsOrdered.push({
+          product_id: p.product_id,
+          name: p.product_name,
+          size: p.size,
+          category: p.category,
+          quantity: p.order_quantity,
+          price: p.price,
+        })
       })
       const orderTransactionArray: OrderTransactionTypes = {
         customer_id: customerId,
@@ -229,6 +252,13 @@ export default function Page() {
           product_size: p.size,
           product_price: p.price,
           product_name: p.product_name,
+          status: '',
+          discounted_price: p.discount_type !== 'None' ? p.discounted_price : 0,
+          discount_total:
+            p.discount_type !== 'None'
+              ? (Number(p.price) - Number(p.discounted_price)) *
+                Number(p.order_quantity)
+              : 0,
         })
       })
 
@@ -250,7 +280,9 @@ export default function Page() {
       // Update Inventory of office products
       await handleUpdateProductsStock()
 
-      setToast('success', 'Successfully completed order transaction.')
+      // Transaction completed successfully, show receipt modal
+      setOrderedProducts(orderedProductsArray)
+      setShowReceiptModal(true)
     } catch (err) {
       console.error(err)
     }
@@ -348,9 +380,21 @@ export default function Page() {
       // Get cart total
       let total = 0
       updatedCart.forEach((product) => {
-        total += Number(product.price) * Number(product.order_quantity)
+        if (product.discount_type !== 'None') {
+          total +=
+            Number(product.discounted_price) * Number(product.order_quantity)
+        } else {
+          total += Number(product.price) * Number(product.order_quantity)
+        }
       })
       setCartTotal(total)
+
+      // Change
+      if (Number(customerCash) > Number(total)) {
+        setChange(Number(customerCash) - Number(total))
+      } else {
+        setChange(0)
+      }
     }
   }
 
@@ -361,6 +405,8 @@ export default function Page() {
       {
         product_id: product.product_id,
         price: product.price,
+        discount_type: product.discount_type,
+        discounted_price: product.discounted_price,
         label: product.value,
         value: product.value,
       },
@@ -375,9 +421,21 @@ export default function Page() {
     // Get cart total
     let total = 0
     updatedList.forEach((product) => {
-      total += Number(product.price) * Number(product.order_quantity)
+      if (product.discount_type !== 'None') {
+        total +=
+          Number(product.discounted_price) * Number(product.order_quantity)
+      } else {
+        total += Number(product.price) * Number(product.order_quantity)
+      }
     })
     setCartTotal(total)
+
+    // Change
+    if (Number(customerCash) > Number(total)) {
+      setChange(Number(customerCash) - Number(total))
+    } else {
+      setChange(0)
+    }
   }
 
   const handleChangeQuantity = (value: string, product: ProductListTypes) => {
@@ -392,7 +450,10 @@ export default function Page() {
         return {
           ...p,
           order_quantity: qty,
-          sub_total: Number(qty) * Number(p.price),
+          sub_total:
+            p.discount_type !== 'None'
+              ? Number(qty) * Number(p.discounted_price)
+              : Number(qty) * Number(p.price),
         }
       }
       return p
@@ -402,9 +463,21 @@ export default function Page() {
     // Get cart total
     let total = 0
     updatedCart.forEach((product) => {
-      total += Number(product.price) * Number(product.order_quantity)
+      if (product.discount_type !== 'None') {
+        total +=
+          Number(product.discounted_price) * Number(product.order_quantity)
+      } else {
+        total += Number(product.price) * Number(product.order_quantity)
+      }
     })
     setCartTotal(total)
+
+    // Change
+    if (Number(customerCash) > Number(total)) {
+      setChange(Number(customerCash) - Number(total))
+    } else {
+      setChange(0)
+    }
   }
 
   useEffect(() => {
@@ -434,7 +507,12 @@ export default function Page() {
             quantity: p.quantity,
             product_name: p.product.name,
             price: p.product.price,
-            sub_total: p.product.price,
+            discounted_price: p.product.discounted_price,
+            discount_type: p.product.discount_type,
+            sub_total:
+              p.product.discount_type !== 'None'
+                ? p.product.discounted_price
+                : p.product.discounted_price,
             category: p.product.category,
             size,
             value: `${p.product.name} (${size})`,
@@ -443,6 +521,8 @@ export default function Page() {
           prodDropdown.push({
             product_id: p.product.id,
             price: p.product.price,
+            discount_type: p.product.discount_type,
+            discounted_price: p.product.discounted_price,
             label: `${p.product.name} (${size})`,
             value: `${p.product.name} (${size})`,
           })
@@ -450,6 +530,7 @@ export default function Page() {
 
         setProductsList(prodArr)
         setProductsDropdown(prodDropdown)
+        setProductsDropdownOriginal(prodDropdown) // use for form.reset()
       }
 
       const { data: customers } = await supabase
@@ -470,7 +551,7 @@ export default function Page() {
 
       setLoading(false)
     })()
-  }, [])
+  }, [form.reset])
 
   return (
     <>
@@ -521,9 +602,24 @@ export default function Page() {
                           }}>
                           <div className="w-full flex items-center justify-between">
                             <div>{product.label}</div>
-                            <div className="flex items-center">
-                              <TbCurrencyPeso />
-                              {product.price}
+                            <div>
+                              {product.discount_type !== 'None' ? (
+                                <div className="flex items-center space-4">
+                                  <div className="flex items-center line-through text-red-500">
+                                    <TbCurrencyPeso />
+                                    {product.price}
+                                  </div>
+                                  <div className="flex items-center">
+                                    <TbCurrencyPeso />
+                                    {product.discounted_price}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex items-center">
+                                  <TbCurrencyPeso />
+                                  {product.price}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </CommandItem>
@@ -567,9 +663,24 @@ export default function Page() {
                           </span>
                         </td>
                         <td className="app__td">
-                          <div className="flex items-center text-base text-gray-800">
-                            <TbCurrencyPeso />
-                            {product.price}
+                          <div className="text-base text-gray-800">
+                            {product.discount_type !== 'None' ? (
+                              <div className="flex items-center space-4">
+                                <div className="flex items-center line-through text-red-500">
+                                  <TbCurrencyPeso />
+                                  {product.price}
+                                </div>
+                                <div className="flex items-center">
+                                  <TbCurrencyPeso />
+                                  {product.discounted_price}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center">
+                                <TbCurrencyPeso />
+                                {product.price}
+                              </div>
+                            )}
                           </div>
                         </td>
                         <td className="app__td">
@@ -659,9 +770,9 @@ export default function Page() {
                           name="new_customer"
                           render={({ field }) => (
                             <FormItem className="w-full">
-                              <FormLabel className="app__form_label">
+                              {/* <FormLabel className="app__form_label">
                                 New Customer Name
-                              </FormLabel>
+                              </FormLabel> */}
                               <FormControl>
                                 <Input
                                   placeholder="Enter Customer Name"
@@ -677,9 +788,9 @@ export default function Page() {
                           name="new_customer_address"
                           render={({ field }) => (
                             <FormItem className="w-full">
-                              <FormLabel className="app__form_label">
+                              {/* <FormLabel className="app__form_label">
                                 Address
-                              </FormLabel>
+                              </FormLabel> */}
                               <FormControl>
                                 <Input
                                   placeholder="Customer Address (optional)"
@@ -699,9 +810,9 @@ export default function Page() {
                           name="old_customer_id"
                           render={() => (
                             <FormItem className="w-full">
-                              <FormLabel className="app__form_label">
+                              {/* <FormLabel className="app__form_label">
                                 Customer Name
-                              </FormLabel>
+                              </FormLabel> */}
                               <SearchCustomerInput
                                 customers={oldCustomers}
                                 handleSelectedId={(selected) => {
@@ -746,6 +857,7 @@ export default function Page() {
                                   } else {
                                     setChange(0)
                                   }
+                                  setCustomerCash(Number(e.currentTarget.value))
                                 }}
                                 {...field}
                               />
@@ -765,51 +877,59 @@ export default function Page() {
                           </div>
                         </div>
                       )}
-                      <hr />
-                      <FormField
-                        control={form.control}
-                        name="confirmed"
-                        render={({ field }) => (
-                          <FormItem>
-                            <div className="flex items-center space-x-2">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal text-gray-600 text-xs">
-                                By checking this, you acknowledge that the
-                                provided details are accurate.
-                              </FormLabel>
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="flex items-center space-x-2">
-                        <CustomButton
-                          btnType="submit"
-                          isDisabled={form.formState.isSubmitting}
-                          title={
-                            form.formState.isSubmitting
-                              ? 'Processing..'
-                              : 'Complete'
-                          }
-                          containerStyles="bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-500 border border-emerald-600 font-bold px-2 py-1 text-base text-white rounded-sm"
-                        />
-                        <CustomButton
-                          btnType="submit"
-                          isDisabled={form.formState.isSubmitting}
-                          title="Cancel"
-                          handleClick={() => {
-                            setSelectedProducts([])
-                            setCartTotal(0)
-                            form.reset()
-                          }}
-                          containerStyles="bg-red-500 hover:bg-red-600 active:bg-red-500 border border-red-600 font-bold px-2 py-1 text-base text-white rounded-sm"
-                        />
-                      </div>
+
+                      {customerCash >= cartTotal && (
+                        <>
+                          <hr />
+                          <FormField
+                            control={form.control}
+                            name="confirmed"
+                            render={({ field }) => (
+                              <FormItem>
+                                <div className="flex items-center space-x-2">
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal text-gray-600 text-xs">
+                                    By checking this, you acknowledge that the
+                                    provided details are accurate.
+                                  </FormLabel>
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <div className="flex items-center space-x-2">
+                            <CustomButton
+                              btnType="submit"
+                              isDisabled={form.formState.isSubmitting}
+                              title={
+                                form.formState.isSubmitting
+                                  ? 'Processing..'
+                                  : 'Complete'
+                              }
+                              containerStyles="bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-500 border border-emerald-600 font-bold px-2 py-1 text-base text-white rounded-sm"
+                            />
+                            <CustomButton
+                              btnType="button"
+                              isDisabled={form.formState.isSubmitting}
+                              title="Cancel"
+                              handleClick={() => {
+                                setSelectedProducts([])
+                                setCartTotal(0)
+                                setChange(0)
+                                setCustomerCash(0)
+                                form.reset()
+                                setProductsDropdown(productsDropdownOriginal) //reset the products dropdown
+                              }}
+                              containerStyles="bg-red-500 hover:bg-red-600 active:bg-red-500 border border-red-600 font-bold px-2 py-1 text-base text-white rounded-sm"
+                            />
+                          </div>
+                        </>
+                      )}
                     </div>
                   </form>
                 </Form>
@@ -818,6 +938,23 @@ export default function Page() {
           </div>
         </div>
       </div>
+      {/* Receipt Modal */}
+      {showReceiptModal && (
+        <ReceiptModal
+          cartTotal={cartTotal}
+          change={change}
+          orderedProducts={orderedProducts}
+          hideModal={() => {
+            setShowReceiptModal(false)
+            setSelectedProducts([])
+            setCartTotal(0)
+            setChange(0)
+            setCustomerCash(0)
+            form.reset()
+            setProductsDropdown(productsDropdownOriginal) //reset the products dropdown
+          }}
+        />
+      )}
     </>
   )
 }

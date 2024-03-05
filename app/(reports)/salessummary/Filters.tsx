@@ -1,4 +1,3 @@
-import SearchCustomerInput from '@/components/SearchCustomerInput'
 import { CustomButton } from '@/components/index'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
@@ -23,9 +22,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useSupabase } from '@/context/SupabaseProvider'
-import { AccountTypes, CustomerTypes } from '@/types'
+import { AccountTypes } from '@/types'
 import { cn } from '@/utils/shadcn'
-import { format } from 'date-fns'
+import { format, subMonths } from 'date-fns'
 import { Calendar as CalendarIcon } from 'lucide-react'
 import { nanoid } from 'nanoid'
 import { useEffect, useState } from 'react'
@@ -33,77 +32,51 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 interface FilterTypes {
-  setFilterDate: (date: Date) => void
-  setFilterCustomer: (customer: string | undefined) => void
+  setFilterFrom: (date: Date) => void
+  setFilterTo: (date: Date) => void
   setFilterCashier: (cashier: string) => void
 }
 
-interface OldCustomerValues {
-  customer_id: string
-  name_address: string
-}
-
 const FormSchema = z.object({
-  transaction_date: z.date(),
-  old_customer_id: z.string().optional(),
+  from: z.date(),
+  to: z.date(),
   cashier: z.string(),
 })
 
 const Filters = ({
-  setFilterDate,
-  setFilterCustomer,
+  setFilterFrom,
+  setFilterTo,
   setFilterCashier,
 }: FilterTypes) => {
-  const [oldCustomers, setOldCustomers] = useState<OldCustomerValues[] | []>([])
-
+  //
   const [cashiers, setCashiers] = useState<AccountTypes[] | []>([])
+  const { supabase, currentUser } = useSupabase()
 
-  const { currentUser, supabase } = useSupabase()
   const activeUser: AccountTypes = currentUser
 
-  //
   const form = useForm<z.infer<typeof FormSchema>>({
     defaultValues: {
-      transaction_date: new Date(),
-      old_customer_id: undefined,
+      from: new Date(subMonths(new Date(), 1)),
+      to: new Date(),
       cashier: 'All',
     },
   })
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
-    setFilterDate(data.transaction_date)
-    setFilterCustomer(data.old_customer_id)
+    setFilterFrom(data.from)
+    setFilterTo(data.to)
     setFilterCashier(data.cashier)
   }
 
   // clear all filters
   const handleClear = () => {
     form.reset()
-    setFilterDate(new Date())
-    setFilterCustomer(undefined)
+    setFilterFrom(new Date(subMonths(new Date(), 1)))
+    setFilterTo(new Date())
     setFilterCashier('All')
   }
 
   useEffect(() => {
-    // Fetch customers
-    ;(async () => {
-      const { data: customers } = await supabase
-        .from('agriko_customers')
-        .select()
-        .eq('office_id', activeUser.active_office_id)
-
-      if (customers) {
-        const oldCust: any = []
-        customers.forEach((c: CustomerTypes) => {
-          oldCust.push({
-            name_address: `${c.name} - ${c.address} #${c.id}`,
-            customer_id: c.id,
-          })
-        })
-        setOldCustomers(oldCust)
-      }
-    })()
-
     // Fetch cashiers
     ;(async () => {
       const { data: cashiersData } = await supabase
@@ -128,12 +101,10 @@ const Filters = ({
             <div className="items-center inline-flex app__filter_field_container">
               <FormField
                 control={form.control}
-                name="transaction_date"
+                name="from"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel className="app__form_label">
-                      Transaction Date
-                    </FormLabel>
+                    <FormLabel className="app__form_label">From</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -172,18 +143,40 @@ const Filters = ({
             <div className="items-center inline-flex app__filter_field_container">
               <FormField
                 control={form.control}
-                name="old_customer_id"
-                render={() => (
-                  <FormItem className="w-full">
-                    <FormLabel className="app__form_label">
-                      Customer Name
-                    </FormLabel>
-                    <SearchCustomerInput
-                      customers={oldCustomers}
-                      handleSelectedId={(selected) => {
-                        form.setValue('old_customer_id', selected.toString())
-                      }}
-                    />
+                name="to"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel className="app__form_label">To</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={'outline'}
+                            className={cn(
+                              'w-[240px] pl-3 text-left font-normal',
+                              !field.value && 'text-muted-foreground'
+                            )}>
+                            {field.value ? (
+                              format(field.value, 'PPP')
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-auto p-0"
+                        align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date < new Date('1900-01-01')}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -236,7 +229,7 @@ const Filters = ({
             />
             <CustomButton
               containerStyles="app__btn_gray"
-              title="Clear Filter"
+              title="Reset Filter"
               btnType="button"
               handleClick={handleClear}
             />

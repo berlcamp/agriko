@@ -26,7 +26,6 @@ import type { ProductTypes, RawMaterialTypes } from '@/types/index'
 import { updateList } from '@/GlobalRedux/Features/listSlice'
 import { updateResultCounter } from '@/GlobalRedux/Features/resultsCounterSlice'
 import { ChevronDownIcon, PencilSquareIcon } from '@heroicons/react/20/solid'
-import { AlertTriangle } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import AddEditModal from './AddEditModal'
 import RawMaterials from './RawMaterials'
@@ -253,7 +252,13 @@ const Page: React.FC = () => {
                   <th className="app__th">Product Name</th>
                   <th className="hidden md:table-cell app__th">Size</th>
                   <th className="hidden md:table-cell app__th">Price</th>
+                  <th className="hidden md:table-cell app__th">
+                    Discounted Price
+                  </th>
                   <th className="hidden md:table-cell app__th">Category</th>
+                  <th className="hidden md:table-cell app__th">
+                    Quantity Alert
+                  </th>
                   <th className="hidden md:table-cell app__th">Status</th>
                   <th className="hidden md:table-cell app__th"></th>
                 </tr>
@@ -296,28 +301,28 @@ const Page: React.FC = () => {
                                   </div>
                                 </Menu.Item>
                                 <Menu.Item>
-                                  <>
+                                  <div className="app__dropdown_item !cursor-default">
                                     {item.status === 'Active' && (
-                                      <div
-                                        onClick={() =>
+                                      <CustomButton
+                                        containerStyles="app__btn_red_xs"
+                                        title="Deactivate"
+                                        btnType="button"
+                                        handleClick={() =>
                                           HandleConfirm('Deactivate', item.id)
                                         }
-                                        className="app__dropdown_item">
-                                        <AlertTriangle className="w-4 h-4" />
-                                        <span>Deactivate</span>
-                                      </div>
+                                      />
                                     )}
                                     {item.status === 'Inactive' && (
-                                      <div
-                                        onClick={() =>
+                                      <CustomButton
+                                        containerStyles="app__btn_green_xs"
+                                        title="Activate"
+                                        btnType="button"
+                                        handleClick={() =>
                                           HandleConfirm('Activate', item.id)
                                         }
-                                        className="app__dropdown_item">
-                                        <AlertTriangle className="w-4 h-4" />
-                                        <span>Activate</span>
-                                      </div>
+                                      />
                                     )}
-                                  </>
+                                  </div>
                                 </Menu.Item>
                               </div>
                             </Menu.Items>
@@ -339,6 +344,14 @@ const Page: React.FC = () => {
                               </span>{' '}
                               {item.price}
                             </div>
+                            {item.discount_type !== 'None' && (
+                              <div>
+                                <span className="app_td_mobile_label">
+                                  Discounted Price:
+                                </span>{' '}
+                                {item.discounted_price}
+                              </div>
+                            )}
                             <div>
                               <span className="app_td_mobile_label">
                                 Category:
@@ -386,7 +399,15 @@ const Page: React.FC = () => {
                         <div>{item.price}</div>
                       </td>
                       <td className="hidden md:table-cell app__td">
+                        {item.discount_type !== 'None' && (
+                          <div>{item.discounted_price}</div>
+                        )}
+                      </td>
+                      <td className="hidden md:table-cell app__td">
                         <div>{item.category}</div>
+                      </td>
+                      <td className="hidden md:table-cell app__td">
+                        <div>{item.quantity_warning}</div>
                       </td>
                       <td className="hidden md:table-cell app__td">
                         {item.status === 'Inactive' ? (

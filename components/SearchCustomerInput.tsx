@@ -32,7 +32,7 @@ export default function SearchCustomerInput({
 
     setSearchHead(searchTerm)
 
-    if (searchTerm.trim().length < 3) {
+    if (searchTerm.trim().length < 2) {
       setSearchResults([])
       return
     }

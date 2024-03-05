@@ -45,29 +45,48 @@ import { PlusIcon, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-const FormSchema = z.object({
-  product_name: z.string().min(1, {
-    message: 'Name is required.',
-  }),
-  category: z.string().min(1, {
-    message: 'Category is required.',
-  }),
-  size: z.string().min(1, {
-    message: 'Size is required.',
-  }),
-  custom_size: z.string().optional(),
-  price: z.coerce // use coerce to cast to string to number https://stackoverflow.com/questions/76878664/react-hook-form-and-zod-inumber-input
-    .number({
-      required_error: 'Price is required.',
-      invalid_type_error: 'Price is required',
-    })
-    .positive({
-      message: 'Price is required...',
+const FormSchema = z
+  .object({
+    product_name: z.string().min(1, {
+      message: 'Name is required.',
     }),
-  confirmed: z.literal(true, {
-    errorMap: () => ({ message: 'Confirmation is required' }),
-  }),
-})
+    category: z.string().min(1, {
+      message: 'Category is required.',
+    }),
+    size: z.string().min(1, {
+      message: 'Size is required.',
+    }),
+    custom_size: z.string().optional(),
+    price: z.coerce // use coerce to cast to string to number https://stackoverflow.com/questions/76878664/react-hook-form-and-zod-inumber-input
+      .number({
+        required_error: 'Price is required.',
+        invalid_type_error: 'Price is required',
+      })
+      .positive({
+        message: 'Price is required...',
+      }),
+    discount_type: z.string(),
+    discounted_price: z.coerce // use coerce to cast to string to number https://stackoverflow.com/questions/76878664/react-hook-form-and-zod-inumber-input
+      .number({
+        required_error: 'Discounted price is required.',
+        invalid_type_error: 'Discounted price is required',
+      }),
+    quantity_warning: z.coerce // use coerce to cast to string to number https://stackoverflow.com/questions/76878664/react-hook-form-and-zod-inumber-input
+      .number({
+        required_error: 'Quantity warning threshold is required.',
+        invalid_type_error: 'Quantity warning threshold is required',
+      })
+      .positive({
+        message: 'Quantity warning threshold is required...',
+      }),
+    confirmed: z.literal(true, {
+      errorMap: () => ({ message: 'Confirmation is required' }),
+    }),
+  })
+  .refine((data) => Number(data.discounted_price) < Number(data.price), {
+    message: 'Discounted price must be less than the Original Price',
+    path: ['discounted_price'],
+  })
 
 interface ModalProps {
   hideModal: () => void
@@ -86,6 +105,10 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
 
   const [showCustomSize, setShowCustomSize] = useState(
     editData ? (editData.size === 'Custom Size' ? true : false) : false
+  )
+
+  const [showDiscountedPrice, setShowDiscountedPrice] = useState(
+    editData ? (editData.discount_type !== 'None' ? true : false) : false
   )
 
   // loading state
@@ -116,6 +139,9 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
       size: editData ? editData.size : '',
       custom_size: editData ? editData.custom_size || '' : '',
       price: editData ? editData.price || 0 : 0, // add zero to prevent error
+      quantity_warning: editData ? editData.quantity_warning || 0 : 0, // add zero to prevent error
+      discount_type: editData ? editData.discount_type : 'None',
+      discounted_price: editData ? editData.discounted_price : 0,
       category: editData ? editData.category : '',
     },
   })
@@ -141,6 +167,9 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
         custom_size:
           formdata.size === 'Custom Size' ? formdata.custom_size : ' ',
         price: formdata.price,
+        discount_type: formdata.discount_type,
+        discounted_price: formdata.discounted_price,
+        quantity_warning: formdata.quantity_warning,
         category: formdata.category,
         raw_materials: rawMaterialsArr,
         status: 'Active',
@@ -197,6 +226,9 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
         custom_size:
           formdata.size === 'Custom Size' ? formdata.custom_size : ' ',
         price: formdata.price,
+        discount_type: formdata.discount_type,
+        discounted_price: formdata.discounted_price,
+        quantity_warning: formdata.quantity_warning,
         raw_materials: rawMaterialsArr,
         category: formdata.category,
       }
@@ -474,25 +506,115 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
                       />
                     </div>
                   </div>
-                  <FormField
-                    control={form.control}
-                    name="price"
-                    render={({ field }) => (
-                      <FormItem className="w-full md:w-1/2">
-                        <FormLabel className="app__form_label">Price</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            step="any"
-                            placeholder="Enter Price"
-                            className="w-[240px]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="flex items-start justify-between space-x-2">
+                    <div className="w-1/2 space-y-6">
+                      <FormField
+                        control={form.control}
+                        name="quantity_warning"
+                        render={({ field }) => (
+                          <FormItem className="w-full md:w-1/2">
+                            <FormLabel className="app__form_label">
+                              Quantity Alert
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="any"
+                                placeholder="Quantity Alert Threshold"
+                                className="w-[240px]"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="w-1/2 space-y-6">
+                      <FormField
+                        control={form.control}
+                        name="price"
+                        render={({ field }) => (
+                          <FormItem className="w-full md:w-1/2">
+                            <FormLabel className="app__form_label">
+                              Price
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="any"
+                                placeholder="Enter Price"
+                                className="w-[240px]"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-start justify-between space-x-2">
+                    <div className="w-1/2 space-y-6">
+                      <FormField
+                        control={form.control}
+                        name="discount_type"
+                        render={({ field }) => (
+                          <FormItem className="w-full">
+                            <FormLabel className="app__form_label">
+                              Discount
+                            </FormLabel>
+                            <Select
+                              onValueChange={(value) => {
+                                field.onChange(value)
+                                if (value !== 'None') {
+                                  setShowDiscountedPrice(true)
+                                } else {
+                                  setShowDiscountedPrice(false)
+                                }
+                              }}
+                              defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select Discount" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="None">None</SelectItem>
+                                <SelectItem value="Amount">Amount</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="w-1/2 space-y-6">
+                      {showDiscountedPrice && (
+                        <FormField
+                          control={form.control}
+                          name="discounted_price"
+                          render={({ field }) => (
+                            <FormItem className="w-full">
+                              <FormLabel className="app__form_label">
+                                Discounted Price
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  step="any"
+                                  placeholder="Enter Discounted Price"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
+                  </div>
+
                   <Popover
                     open={open}
                     onOpenChange={setOpen}>

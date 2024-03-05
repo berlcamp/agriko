@@ -153,7 +153,11 @@ const Page: React.FC = () => {
                                 </Tooltip>
                               </TooltipProvider>
                             </span>
-                            <span className="app__product_grid_quantity">
+                            <span
+                              className={`app__product_grid_quantity ${
+                                Number(item.quantity_warning) >=
+                                  Number(item.quantity) && '!text-red-600'
+                              }`}>
                               {item.quantity}
                             </span>
                             <span

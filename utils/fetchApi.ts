@@ -102,6 +102,35 @@ export async function fetchProducts (perPageCount: number, rangeFrom: number) {
   }
 }
 
+export async function fetchPackages (perPageCount: number, rangeFrom: number) {
+  try {
+    let query = supabase
+      .from('agriko_packages')
+      .select('*', { count: 'exact' })
+
+    // Per Page from context
+    const from = rangeFrom
+    const to = from + (perPageCount - 1)
+
+    // Per Page from context
+    query = query.range(from, to)
+
+    // Order By
+    query = query.order('id', { ascending: false })
+
+    const { data, error, count } = await query
+
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    return { data, count }
+  } catch (error) {
+    console.error('fetch packages error', error)
+    return { data: [], count: 0 }
+  }
+}
+
 export async function fetchTransfers (filters: { filterOffice?: string, filterDate?: Date | undefined }, perPageCount: number, rangeFrom: number) {
   try {
     let query = supabase
@@ -142,7 +171,7 @@ export async function fetchTransfers (filters: { filterOffice?: string, filterDa
   }
 }
 
-export async function fetchOrderTransactions (filters: { filterOffice?: string, filterCustomer?: string | undefined, filterDate?: Date | undefined }, perPageCount: number, rangeFrom: number) {
+export async function fetchOrderTransactions (filters: { filterOffice?: string, filterCashier?: string | undefined, filterCustomer?: string | undefined, filterDate?: Date | undefined }, perPageCount: number, rangeFrom: number) {
   try {
     let query = supabase
       .from('agriko_order_transactions')
@@ -152,6 +181,11 @@ export async function fetchOrderTransactions (filters: { filterOffice?: string, 
     // Filter date
     if (filters.filterDate) {
       query = query.eq('transaction_date', format(new Date(filters.filterDate), 'yyyy-MM-dd'))
+    }
+
+    // Filter Cashier
+    if (filters.filterCashier && filters.filterCashier !== 'All') {
+      query = query.eq('cashier_id', filters.filterCashier)
     }
 
     // Filter Customer

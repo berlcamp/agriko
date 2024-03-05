@@ -53,7 +53,7 @@ export interface AccountTypes {
   org_id: string
   created_by: string
   temp_password: string
-  offices: string
+  offices: string[]
   active_office_id: string
 }
 
@@ -95,10 +95,13 @@ export interface ProductTypes {
   id: number
   name: string
   size: string
+  quantity_warning: number
   custom_size: string
   status: string
   category: string
   price: number
+  discounted_price: number
+  discount_type: string
   raw_materials: RawMaterialTypes[] | []
 }
 
@@ -115,6 +118,7 @@ export interface PTypes {
   product_name: string
   unit: string
   quantity: number
+  quantity_warning: number
   id: number
   raw_materials: RawMaterialTypes[]
 }
@@ -142,6 +146,15 @@ export interface TransferedProductTypes {
   quantity: number
 }
 
+export interface PurchasedProductsTypes {
+  product_id: number
+  name: string
+  size: string
+  category: string
+  quantity: number
+  price: number
+}
+
 export interface TransferTransactionTypes {
   id: number
   office_id: number
@@ -160,13 +173,15 @@ export interface CustomerTypes {
 }
 
 export interface OrderTransactionTypes {
+  id?: number
   customer_id: number
   transaction_date: string
   cashier_id: string
+  status?: string
   total_amount: number
   office_id: string
   customer?: CustomerTypes
-  products_ordered: number[]
+  products_ordered: PurchasedProductsTypes[]
   agriko_ordered_products?: OrderedProductTypes[]
 }
 
@@ -183,4 +198,13 @@ export interface OrderedProductTypes {
   product_size: string
   product_price: number
   product_name: string
+  status: string
+  discounted_price: number
+  discount_total: number
+}
+
+export interface ChartDataSetTypes {
+  label: string
+  data: number[]
+  bgColor: string
 }

@@ -2,6 +2,7 @@
 
 import { useSupabase } from '@/context/SupabaseProvider'
 import { AccountTypes } from '@/types'
+import { ChartBarIcon } from '@heroicons/react/20/solid'
 import { ListChecks, ShoppingBasket, ShoppingCart } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -103,6 +104,25 @@ export default function MainSideBar() {
                     <span className="text-white text-xs">{incomingCount}</span>
                   </span>
                 )}
+              </Link>
+            </li>
+          </ul>
+          <ul className="mt-8 space-y-2 border-gray-700">
+            <li>
+              <div className="flex items-center text-gray-500 font-semibold items-centers space-x-1 px-2">
+                <ChartBarIcon className="w-4 h-4" />
+                <span>Reports</span>
+              </div>
+            </li>
+            <li>
+              <Link
+                href="/salessummary"
+                className={`app__menu_link ${
+                  currentRoute === '/salessummary' ? 'app_menu_link_active' : ''
+                }`}>
+                <span className="flex-1 ml-3 whitespace-nowrap">
+                  Sales Summary
+                </span>
               </Link>
             </li>
           </ul>

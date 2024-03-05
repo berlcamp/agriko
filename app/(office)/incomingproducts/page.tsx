@@ -17,7 +17,7 @@ import { superAdmins } from '@/constants'
 import { useFilter } from '@/context/FilterContext'
 import { useSupabase } from '@/context/SupabaseProvider'
 import { fetchTransfers, logError } from '@/utils/fetchApi'
-import React, { useEffect, useState } from 'react'
+import React, { Fragment, useEffect, useState } from 'react'
 // Types
 import type {
   AccountTypes,
@@ -29,7 +29,10 @@ import type {
 // Redux imports
 import { updateList } from '@/GlobalRedux/Features/listSlice'
 import { updateResultCounter } from '@/GlobalRedux/Features/resultsCounterSlice'
+import { Menu, Transition } from '@headlessui/react'
+import { ChevronDownIcon } from '@heroicons/react/20/solid'
 import { format } from 'date-fns'
+import { ShoppingCart } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import ProductsModal from './ProductsModal'
 
@@ -331,12 +334,12 @@ const Page: React.FC = () => {
             <table className="app__table">
               <thead className="app__thead">
                 <tr>
+                  <th className="app__th pl-4"></th>
                   <th className="hidden md:table-cell app__th pl-4">
                     <div className="pl-4">Date Transfered</div>
                   </th>
                   <th className="hidden md:table-cell app__th">Memo</th>
                   <th className="hidden md:table-cell app__th">Status</th>
-                  <th className="hidden md:table-cell app__th"></th>
                 </tr>
               </thead>
               <tbody>
@@ -345,6 +348,58 @@ const Page: React.FC = () => {
                     <tr
                       key={index}
                       className="app__tr">
+                      <td className="w-6 pl-4 app__td">
+                        <Menu
+                          as="div"
+                          className="app__menu_container">
+                          <div>
+                            <Menu.Button className="app__dropdown_btn">
+                              <ChevronDownIcon
+                                className="h-5 w-5"
+                                aria-hidden="true"
+                              />
+                            </Menu.Button>
+                          </div>
+
+                          <Transition
+                            as={Fragment}
+                            enter="transition ease-out duration-100"
+                            enterFrom="transform opacity-0 scale-95"
+                            enterTo="transform opacity-100 scale-100"
+                            leave="transition ease-in duration-75"
+                            leaveFrom="transform opacity-100 scale-100"
+                            leaveTo="transform opacity-0 scale-95">
+                            <Menu.Items className="app__dropdown_items">
+                              <div className="py-1">
+                                <Menu.Item>
+                                  <div
+                                    onClick={() =>
+                                      handleViewProducts(item.products!)
+                                    }
+                                    className="app__dropdown_item">
+                                    <ShoppingCart className="w-4 h-4" />
+                                    <span>View Products</span>
+                                  </div>
+                                </Menu.Item>
+                                {item.status === 'To Receive' && (
+                                  <Menu.Item>
+                                    <div className="app__dropdown_item !cursor-default">
+                                      <CustomButton
+                                        containerStyles="app__btn_green_xs"
+                                        title="Receive and Move to In-Stock Products"
+                                        btnType="button"
+                                        handleClick={() =>
+                                          HandleConfirm('Receive', item.id)
+                                        }
+                                      />
+                                    </div>
+                                  </Menu.Item>
+                                )}
+                              </div>
+                            </Menu.Items>
+                          </Transition>
+                        </Menu>
+                      </td>
                       <td className="app__td">
                         <div className="pl-4">
                           {format(
@@ -378,14 +433,6 @@ const Page: React.FC = () => {
                                 handleViewProducts(item.products)
                               }
                             />
-                            <CustomButton
-                              containerStyles="app__btn_blue_xs"
-                              title="View Products"
-                              btnType="button"
-                              handleClick={() =>
-                                handleViewProducts(item.products)
-                              }
-                            />
                           </div>
                         </div>
                         {/* End Mobile View */}
@@ -403,24 +450,6 @@ const Page: React.FC = () => {
                             {item.status}
                           </span>
                         )}
-                      </td>
-                      <td className="hidden md:table-cell app__td space-x-2">
-                        {item.status === 'To Receive' && (
-                          <CustomButton
-                            containerStyles="app__btn_green_xs"
-                            title="Receive and Move to In-Stock Products"
-                            btnType="button"
-                            handleClick={() =>
-                              HandleConfirm('Receive', item.id)
-                            }
-                          />
-                        )}
-                        <CustomButton
-                          containerStyles="app__btn_blue_xs"
-                          title="View Products"
-                          btnType="button"
-                          handleClick={() => handleViewProducts(item.products)}
-                        />
                       </td>
                     </tr>
                   ))}

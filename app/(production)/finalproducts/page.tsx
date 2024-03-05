@@ -114,6 +114,7 @@ const Page: React.FC = () => {
               product_name: p.name,
               unit: p.size === 'Custom Size' ? p.custom_size : p.size,
               quantity: sumOfQuantities,
+              quantity_warning: p.quantity_warning,
               raw_materials: p.raw_materials,
             })
           })
@@ -180,7 +181,11 @@ const Page: React.FC = () => {
                       {item.products?.map((product, idx) => (
                         <div
                           key={idx}
-                          className="app__product_grid_container">
+                          className={`app__product_grid_container ${
+                            Number(product.quantity_warning) >=
+                              Number(product.quantity) &&
+                            '!border-2 !border-red-500 !bg-red-50'
+                          }`}>
                           <div className="app__product_grid_container_2">
                             <div className="app__product_grid_title">
                               {product.product_name} ({product.unit})
@@ -202,7 +207,11 @@ const Page: React.FC = () => {
                                   </Tooltip>
                                 </TooltipProvider>
                               </span>
-                              <span className="app__product_grid_quantity">
+                              <span
+                                className={`app__product_grid_quantity ${
+                                  Number(product.quantity_warning) >=
+                                    Number(product.quantity) && '!text-red-600'
+                                }`}>
                                 {product.quantity}
                               </span>
                               <span
@@ -325,7 +334,14 @@ const Page: React.FC = () => {
                                 <div>{item.category}</div>
                               </td>
                               <td className="app__td">
-                                <div>{product.quantity}</div>
+                                <div
+                                  className={`${
+                                    Number(product.quantity_warning) >=
+                                      Number(product.quantity) &&
+                                    '!text-red-600 font-bold'
+                                  }`}>
+                                  {product.quantity}
+                                </div>
                               </td>
                             </tr>
                           ))}
