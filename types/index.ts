@@ -118,9 +118,9 @@ export interface PTypes {
   product_name: string
   unit: string
   quantity: number
-  quantity_warning: number
+  quantity_warning?: number
   id: number
-  raw_materials: RawMaterialTypes[]
+  raw_materials?: RawMaterialTypes[]
 }
 
 export interface OfficeTypes {
