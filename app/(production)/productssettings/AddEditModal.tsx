@@ -521,7 +521,6 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
                                 type="number"
                                 step="any"
                                 placeholder="Quantity Alert Threshold"
-                                className="w-[240px]"
                                 {...field}
                               />
                             </FormControl>
@@ -544,7 +543,6 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
                                 type="number"
                                 step="any"
                                 placeholder="Enter Price"
-                                className="w-[240px]"
                                 {...field}
                               />
                             </FormControl>

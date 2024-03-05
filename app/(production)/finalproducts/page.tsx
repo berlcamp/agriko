@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client'
 
+import ProductsChart from '@/components/Charts/ProductsChart'
 import TwoColTableLoading from '@/components/Loading/TwoColTableLoading'
 import {
   LogsModal,
@@ -28,10 +29,24 @@ import {
   PlusCircleIcon,
 } from '@heroicons/react/20/solid'
 import { PlusCircledIcon } from '@radix-ui/react-icons'
-import { LayoutGrid, List } from 'lucide-react'
+import { BarChart3Icon, LayoutGrid, List } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import React, { Fragment, useEffect, useState } from 'react'
 import AddEditModal from './AddEditModal'
+
+const colors = [
+  '#55d978',
+  '#d9ca55',
+  '#d9985f',
+  '#5caecc',
+  '#adedd9',
+  '#d0e3f7',
+  '#c3ffad',
+  '#ffc4ef',
+  '#87f5ff',
+  '#8ce37d',
+  '#6dd6b5',
+]
 
 interface ListTypes {
   category: string
@@ -43,6 +58,10 @@ const Page: React.FC = () => {
   const [list, setList] = useState<ListTypes[] | null>(null)
   const [refetch, setRefetch] = useState(false)
   const [addOrAdjust, setAddOrAdjust] = useState('')
+
+  // Products chart data
+  const [dataSets, setDataSets] = useState([])
+  const [labels, setLabels] = useState<string[] | []>([])
 
   // loading state
   const [loading, setLoading] = useState(false)
@@ -85,6 +104,8 @@ const Page: React.FC = () => {
         .select('*')
         .eq('status', 'Active')
 
+      const dataSetsData: any = []
+
       if (allProducts) {
         const categoryArr: ListTypes[] = []
 
@@ -117,6 +138,21 @@ const Page: React.FC = () => {
               quantity_warning: p.quantity_warning,
               raw_materials: p.raw_materials,
             })
+
+            // Create datasets array
+            if (sumOfQuantities > 0) {
+              const randomIdx = Math.floor(Math.random() * 11)
+              dataSetsData.push({
+                label: `${p.name} (${
+                  p.size === 'Custom Size' ? p.custom_size : p.size
+                })`,
+                data: [sumOfQuantities],
+                bgColor:
+                  Number(sumOfQuantities) > Number(p.quantity_warning)
+                    ? '#37cf32'
+                    : '#d4493f',
+              })
+            }
           })
           // If category has products, add them to categoryArr
           if (productArr.length > 0) {
@@ -126,12 +162,15 @@ const Page: React.FC = () => {
 
         setList(categoryArr)
         setLoading(false)
+
+        setLabels(['Stocks'])
+        setDataSets(dataSetsData)
       }
     })()
   }, [refetch])
 
   // Check access from permission settings or Super Admins
-  if (!hasAccess('collections') && !superAdmins.includes(session.user.email))
+  if (!hasAccess('superadmin') && !superAdmins.includes(session.user.email))
     return <Unauthorized />
 
   return (
@@ -159,6 +198,14 @@ const Page: React.FC = () => {
                 : 'w-7 h-7 cursor-pointer'
             }`}
           />
+          <BarChart3Icon
+            onClick={() => setViewType('chart')}
+            className={`${
+              viewType === 'chart'
+                ? 'w-8 h-8 bg-gray-400 p-1 rounded-lg cursor-pointer'
+                : 'w-7 h-7 cursor-pointer'
+            }`}
+          />
         </div>
         {loading && (
           <div>
@@ -181,11 +228,7 @@ const Page: React.FC = () => {
                       {item.products?.map((product, idx) => (
                         <div
                           key={idx}
-                          className={`app__product_grid_container ${
-                            Number(product.quantity_warning) >=
-                              Number(product.quantity) &&
-                            '!border-2 !border-red-500 !bg-red-50'
-                          }`}>
+                          className="app__product_grid_container">
                           <div className="app__product_grid_container_2">
                             <div className="app__product_grid_title">
                               {product.product_name} ({product.unit})
@@ -352,6 +395,22 @@ const Page: React.FC = () => {
                 </div>
               </>
             )}{' '}
+            {/* Chart View */}
+            {viewType === 'chart' && (
+              <>
+                <div className="app__title">
+                  <Title title="Products Inventory" />
+                </div>
+                <div className="mx-4 bg-white mt-2">
+                  <div className="p-2 h-[800px]">
+                    <ProductsChart
+                      labels={labels}
+                      dataSets={dataSets}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </>
         )}
       </div>

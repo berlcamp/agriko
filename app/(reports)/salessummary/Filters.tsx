@@ -14,13 +14,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { useSupabase } from '@/context/SupabaseProvider'
 import { AccountTypes } from '@/types'
 import { cn } from '@/utils/shadcn'
@@ -50,7 +43,7 @@ const Filters = ({
 }: FilterTypes) => {
   //
   const [cashiers, setCashiers] = useState<AccountTypes[] | []>([])
-  const { supabase, currentUser } = useSupabase()
+  const { supabase, systemUsers, currentUser } = useSupabase()
 
   const activeUser: AccountTypes = currentUser
 
@@ -79,14 +72,10 @@ const Filters = ({
   useEffect(() => {
     // Fetch cashiers
     ;(async () => {
-      const { data: cashiersData } = await supabase
-        .from('agriko_users')
-        .select()
-
-      const filteredCashiers = cashiersData.filter((c: AccountTypes) =>
-        c.offices.find(
-          (o) => o.toString() === activeUser.active_office_id.toString()
-        )
+      const filteredCashiers = systemUsers.filter(
+        (c: AccountTypes) =>
+          c.active_office_id.toString() ===
+          activeUser.active_office_id.toString()
       )
 
       setCashiers(filteredCashiers)
@@ -189,31 +178,21 @@ const Filters = ({
                 render={({ field }) => (
                   <FormItem className="w-[240px] flex flex-col items-start justify-start">
                     <FormLabel className="app__form_label">Cashier</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
+                    <select
+                      onChange={(e) => {
+                        form.setValue('cashier', e.target.value)
+                      }}
                       value={field.value}
-                      defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          {/* Workaround for reset issue: https://github.com/shadcn-ui/ui/issues/549#issuecomment-1693745585 */}
-                          {field.value ? (
-                            <SelectValue placeholder="Select Cashier" />
-                          ) : (
-                            'Select Cashier'
-                          )}
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="All">All</SelectItem>
-                        {cashiers?.map((c) => (
-                          <SelectItem
-                            key={nanoid()}
-                            value={c.id}>
-                            {`${c.firstname} ${c.middlename} ${c.lastname}`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      className="flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm ring-offset-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-950 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 dark:border-slate-800 dark:ring-offset-slate-950 dark:placeholder:text-slate-400 dark:focus:ring-slate-300">
+                      <option value="All">Select Cashier</option>
+                      {cashiers?.map((c) => (
+                        <option
+                          key={nanoid()}
+                          value={c.id}>
+                          {c.firstname} {c.middlename} {c.lastname}
+                        </option>
+                      ))}
+                    </select>
                     <FormMessage />
                   </FormItem>
                 )}

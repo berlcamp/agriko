@@ -211,7 +211,7 @@ const Page: React.FC = () => {
   const isDataEmpty = !Array.isArray(list) || list.length < 1 || !list
 
   // Check access from permission settings or Super Admins
-  if (!hasAccess('products') && !superAdmins.includes(session.user.email))
+  if (!hasAccess('superadmin') && !superAdmins.includes(session.user.email))
     return <Unauthorized />
 
   return (

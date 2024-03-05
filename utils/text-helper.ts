@@ -60,7 +60,7 @@ export async function handleLogChanges (newData: any, originalData: any, referen
   if (error) {
     void logError(
       "Log Changes",
-      "ceedo_change_logs",
+      "agriko_change_logs",
       JSON.stringify(changesData),
       JSON.stringify(error)
     );

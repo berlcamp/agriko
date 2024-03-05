@@ -11,7 +11,6 @@ import {
   TableRowLoading,
   Title,
   TopBar,
-  Unauthorized,
 } from '@/components/index'
 import { superAdmins } from '@/constants'
 import { useFilter } from '@/context/FilterContext'
@@ -305,10 +304,6 @@ const Page: React.FC = () => {
 
   const isDataEmpty = !Array.isArray(list) || list.length < 1 || !list
 
-  // Check access from permission settings or Super Admins
-  if (!hasAccess('collections') && !superAdmins.includes(session.user.email))
-    return <Unauthorized />
-
   return (
     <>
       <Sidebar>
@@ -381,20 +376,25 @@ const Page: React.FC = () => {
                                     <span>View Products</span>
                                   </div>
                                 </Menu.Item>
-                                {item.status === 'To Receive' && (
-                                  <Menu.Item>
-                                    <div className="app__dropdown_item !cursor-default">
-                                      <CustomButton
-                                        containerStyles="app__btn_green_xs"
-                                        title="Receive and Move to In-Stock Products"
-                                        btnType="button"
-                                        handleClick={() =>
-                                          HandleConfirm('Receive', item.id)
-                                        }
-                                      />
-                                    </div>
-                                  </Menu.Item>
-                                )}
+                                {item.status === 'To Receive' &&
+                                  (hasAccess('manager') ||
+                                    hasAccess('superadmin') ||
+                                    superAdmins.includes(
+                                      session.user.email
+                                    )) && (
+                                    <Menu.Item>
+                                      <div className="app__dropdown_item !cursor-default">
+                                        <CustomButton
+                                          containerStyles="app__btn_green_xs"
+                                          title="Receive and Move to In-Stock Products"
+                                          btnType="button"
+                                          handleClick={() =>
+                                            HandleConfirm('Receive', item.id)
+                                          }
+                                        />
+                                      </div>
+                                    </Menu.Item>
+                                  )}
                               </div>
                             </Menu.Items>
                           </Transition>

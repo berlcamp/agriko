@@ -5,7 +5,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -24,6 +23,7 @@ import axios from 'axios'
 // Redux imports
 import { updateList } from '@/GlobalRedux/Features/listSlice'
 import { updateResultCounter } from '@/GlobalRedux/Features/resultsCounterSlice'
+import { nanoid } from 'nanoid'
 import { useDispatch, useSelector } from 'react-redux'
 
 const FormSchema = z.object({
@@ -37,8 +37,8 @@ const FormSchema = z.object({
   email: z.string().email().min(1, {
     message: 'Email is required.',
   }),
-  offices: z.array(z.string()).refine((value) => value.some((item) => item), {
-    message: 'You have to select at least one office.',
+  office: z.string().min(1, {
+    message: 'Office is required.',
   }),
   confirmed: z.literal(true, {
     errorMap: () => ({ message: 'Confirmation is required' }),
@@ -51,14 +51,10 @@ interface ModalProps {
 }
 
 const AddEdit = ({ editData, hideModal }: ModalProps) => {
-  const { supabase, systemOffices, session } = useSupabase()
+  const { supabase, systemOffices } = useSupabase()
   const { setToast } = useFilter()
 
-  const offices: { id: string; label: string }[] = []
-  systemOffices.forEach((office: OfficeTypes) => {
-    if (office.type === 'Office')
-      offices.push({ id: office.name, label: office.name })
-  })
+  const offices: OfficeTypes[] = systemOffices
 
   // Redux staff
   const globallist = useSelector((state: any) => state.list.value)
@@ -68,23 +64,23 @@ const AddEdit = ({ editData, hideModal }: ModalProps) => {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      firstname: '',
-      middlename: '',
-      lastname: '',
-      email: '',
-      offices: [],
+      firstname: editData ? editData.firstname : '',
+      middlename: editData ? editData.middlename : '',
+      lastname: editData ? editData.lastname : '',
+      email: editData ? editData.email : '',
+      office: editData ? editData.active_office_id : '',
     },
   })
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
-    const officeIds: string[] = []
-    data.offices.forEach((office: string) => {
-      const ofc: OfficeTypes = systemOffices.find(
-        (so: OfficeTypes) => office === so.name
-      )
-      officeIds.push(ofc.id)
-    })
+    if (!editData) {
+      await handleCreate(data)
+    } else {
+      await handleUpdate(data)
+    }
+  }
 
+  const handleCreate = async (data: z.infer<typeof FormSchema>) => {
     try {
       const newData = {
         firstname: data.firstname,
@@ -93,8 +89,7 @@ const AddEdit = ({ editData, hideModal }: ModalProps) => {
         status: 'Active',
         email: data.email,
         temp_password: tempPassword.toString(),
-        offices: officeIds,
-        active_office_id: Number(officeIds[0]),
+        active_office_id: data.office,
       }
 
       // Sign up the user on the server side to fix pkce issue https://github.com/supabase/auth-helpers/issues/569
@@ -135,6 +130,44 @@ const AddEdit = ({ editData, hideModal }: ModalProps) => {
     }
   }
 
+  const handleUpdate = async (formdata: z.infer<typeof FormSchema>) => {
+    if (!editData) return
+
+    const newData = {
+      firstname: formdata.firstname,
+      middlename: formdata.middlename,
+      lastname: formdata.lastname,
+      active_office_id: formdata.office,
+    }
+
+    try {
+      const { error } = await supabase
+        .from('agriko_users')
+        .update(newData)
+        .eq('id', editData.id)
+
+      if (error) throw new Error(error.message)
+
+      // Update data in redux
+      const items = [...globallist]
+      const updatedData = {
+        ...newData,
+        id: editData.id,
+      }
+      const foundIndex = items.findIndex((x) => x.id === updatedData.id)
+      items[foundIndex] = { ...items[foundIndex], ...updatedData }
+      dispatch(updateList(items))
+
+      // pop up the success message
+      setToast('success', 'Successfully saved.')
+
+      // hide the modal
+      hideModal()
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   const tempPassword = Math.floor(Math.random() * 999999) + 1000
 
   return (
@@ -160,133 +193,127 @@ const AddEdit = ({ editData, hideModal }: ModalProps) => {
                   className="space-y-6">
                   <FormField
                     control={form.control}
-                    name="offices"
-                    render={() => (
-                      <FormItem>
-                        <div className="mb-4">
-                          <FormLabel className="app__form_label">
-                            Office
-                          </FormLabel>
-                          <FormDescription>
-                            This user can access the following Office
-                          </FormDescription>
-                        </div>
-                        {offices.map((item) => (
-                          <FormField
-                            key={item.id}
-                            control={form.control}
-                            name="offices"
-                            render={({ field }) => {
-                              return (
-                                <FormItem
-                                  key={item.id}
-                                  className="flex flex-row items-start space-x-3 space-y-0">
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(item.id)}
-                                      onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([
-                                              ...field.value,
-                                              item.id,
-                                            ])
-                                          : field.onChange(
-                                              field.value?.filter(
-                                                (value) => value !== item.id
-                                              )
-                                            )
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="text-sm font-normal">
-                                    {item.label}
-                                  </FormLabel>
-                                </FormItem>
-                              )
-                            }}
-                          />
-                        ))}
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="firstname"
+                    name="office"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="w-[240px] flex flex-col items-start justify-start">
                         <FormLabel className="app__form_label">
-                          First Name
+                          Office
                         </FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="First Name"
-                            className="w-full"
-                            {...field}
-                          />
-                        </FormControl>
+                        <select
+                          onChange={(e) => {
+                            form.setValue('office', e.target.value)
+                          }}
+                          value={field.value}
+                          className="flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm ring-offset-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-950 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 dark:border-slate-800 dark:ring-offset-slate-950 dark:placeholder:text-slate-400 dark:focus:ring-slate-300">
+                          <option value="">Select Office</option>
+                          {offices?.map((o) => (
+                            <option
+                              key={nanoid()}
+                              value={o.id}>
+                              {o.name}
+                            </option>
+                          ))}
+                        </select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="middlename"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="app__form_label">
-                          Middle Name
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Middle Name"
-                            className="w-full"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="lastname"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="app__form_label">
-                          Last Name
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Last Name"
-                            className="w-full"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="app__form_label">Email</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Email"
-                            className="w-full"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Email is use to Login the account
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="flex items-start justify-between space-x-2">
+                    <div className="w-1/2 space-y-6">
+                      <FormField
+                        control={form.control}
+                        name="firstname"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="app__form_label">
+                              First Name
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="First Name"
+                                className="w-full"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="w-1/2 space-y-6">
+                      <FormField
+                        control={form.control}
+                        name="middlename"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="app__form_label">
+                              Middle Name
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Middle Name"
+                                className="w-full"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-start justify-between space-x-2">
+                    <div className="w-1/2 space-y-6">
+                      <FormField
+                        control={form.control}
+                        name="lastname"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="app__form_label">
+                              Last Name
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Last Name"
+                                className="w-full"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="w-1/2 space-y-6">
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="app__form_label">
+                              Email
+                            </FormLabel>
+                            <FormControl>
+                              {editData ? (
+                                <div className="app__label_value">
+                                  {field.value}
+                                </div>
+                              ) : (
+                                <Input
+                                  placeholder="Email"
+                                  className="w-full"
+                                  {...field}
+                                />
+                              )}
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
                   <hr />
                   <FormField
                     control={form.control}

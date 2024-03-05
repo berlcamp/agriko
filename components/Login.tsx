@@ -1,54 +1,54 @@
-"use client";
-import React, { useState } from "react";
+'use client'
+import React, { useState } from 'react'
 
-import { useSupabase } from "@/context/SupabaseProvider";
-import { CustomButton } from "@/components/index";
-import { useRouter } from "next/navigation";
+import { CustomButton } from '@/components/index'
+import { useSupabase } from '@/context/SupabaseProvider'
+import { useRouter } from 'next/navigation'
 
 // Supabase auth needs to be triggered client-side
 export default function LoginBox() {
-  const { supabase, session } = useSupabase();
-  const [signingIn, setSigningIn] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+  const { supabase, session } = useSupabase()
+  const [signingIn, setSigningIn] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   const handleEmailLogin = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+    event.preventDefault()
 
-    if (email.trim() === "" || password.trim() === "") return;
+    if (email.trim() === '' || password.trim() === '') return
 
-    setSigningIn(true);
+    setSigningIn(true)
 
-    // Check if the user is on ceedo_users table
+    // Check if the user is on agriko_users table
     const { data: user, error: userError } = await supabase
-      .from("ceedo_users")
+      .from('agriko_users')
       .select()
-      .eq("email", email)
-      .eq("status", "Active")
-      .eq("org_id", process.env.NEXT_PUBLIC_ORG_ID)
-      .single();
+      .eq('email', email)
+      .eq('status', 'Active')
+      .eq('org_id', process.env.NEXT_PUBLIC_ORG_ID)
+      .single()
 
-    if (userError) console.error(userError);
+    if (userError) console.error(userError)
 
     if (user) {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
-      });
+      })
 
       if (error) {
-        setError("Credentials provided is incorrect.");
-        setSigningIn(false);
+        setError('Credentials provided is incorrect.')
+        setSigningIn(false)
       } else {
-        router.refresh();
+        router.refresh()
       }
     } else {
-      setError("This is account is currently inactive.");
-      setSigningIn(false);
+      setError('This is account is currently inactive.')
+      setSigningIn(false)
     }
-  };
+  }
 
   return !session ? (
     <div className="">
@@ -87,7 +87,7 @@ export default function LoginBox() {
               <CustomButton
                 containerStyles="app__btn_green_sm w-full"
                 btnType="submit"
-                title={signingIn ? "Signing In..." : "Login"}
+                title={signingIn ? 'Signing In...' : 'Login'}
               />
             </div>
           </form>
@@ -106,5 +106,5 @@ export default function LoginBox() {
         </div>
       </div>
     </div>
-  );
+  )
 }

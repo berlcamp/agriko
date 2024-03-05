@@ -11,9 +11,7 @@ import {
   TableRowLoading,
   Title,
   TopBar,
-  Unauthorized,
 } from '@/components/index'
-import { superAdmins } from '@/constants'
 import { useFilter } from '@/context/FilterContext'
 import { useSupabase } from '@/context/SupabaseProvider'
 import { fetchOrderTransactions, logError } from '@/utils/fetchApi'
@@ -30,6 +28,8 @@ import type {
 // Redux imports
 import { updateList } from '@/GlobalRedux/Features/listSlice'
 import { updateResultCounter } from '@/GlobalRedux/Features/resultsCounterSlice'
+import TwoColTableLoading from '@/components/Loading/TwoColTableLoading'
+import { superAdmins } from '@/constants'
 import { Menu, Transition } from '@headlessui/react'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
 import { format } from 'date-fns'
@@ -290,10 +290,6 @@ const Page: React.FC = () => {
 
   const isDataEmpty = !Array.isArray(list) || list.length < 1 || !list
 
-  // Check access from permission settings or Super Admins
-  if (!hasAccess('collections') && !superAdmins.includes(session.user.email))
-    return <Unauthorized />
-
   return (
     <>
       <Sidebar>
@@ -315,158 +311,170 @@ const Page: React.FC = () => {
             />
           </div>
 
-          {/* Per Page */}
-          <PerPage
-            showingCount={resultsCounter.showing}
-            resultsCount={resultsCounter.results}
-            perPageCount={perPageCount}
-            setPerPageCount={setPerPageCount}
-          />
+          {loading && <TwoColTableLoading />}
+          {!loading && (
+            <>
+              {/* Per Page */}
+              <PerPage
+                showingCount={resultsCounter.showing}
+                resultsCount={resultsCounter.results}
+                perPageCount={perPageCount}
+                setPerPageCount={setPerPageCount}
+              />
 
-          {/* Main Content */}
-          <div>
-            <table className="app__table">
-              <thead className="app__thead">
-                <tr>
-                  <th className="app__th pl-4"></th>
-                  <th className="hidden md:table-cell app__th pl-4">
-                    <div className="pl-4">Date Purchased</div>
-                  </th>
-                  <th className="hidden md:table-cell app__th">Customer</th>
-                  <th className="hidden md:table-cell app__th">Total Amount</th>
-                  <th className="hidden md:table-cell app__th"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {!isDataEmpty &&
-                  list.map((item: OrderTransactionTypes, index) => (
-                    <tr
-                      key={index}
-                      className="app__tr">
-                      <td className="w-6 pl-4 app__td">
-                        <Menu
-                          as="div"
-                          className="app__menu_container">
-                          <div>
-                            <Menu.Button className="app__dropdown_btn">
-                              <ChevronDownIcon
-                                className="h-5 w-5"
-                                aria-hidden="true"
-                              />
-                            </Menu.Button>
-                          </div>
+              {/* Main Content */}
+              <div>
+                <table className="app__table">
+                  <thead className="app__thead">
+                    <tr>
+                      <th className="app__th pl-4"></th>
+                      <th className="hidden md:table-cell app__th pl-4">
+                        <div className="pl-4">Date Purchased</div>
+                      </th>
+                      <th className="hidden md:table-cell app__th">Customer</th>
+                      <th className="hidden md:table-cell app__th">
+                        Total Amount
+                      </th>
+                      <th className="hidden md:table-cell app__th"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {!isDataEmpty &&
+                      list.map((item: OrderTransactionTypes, index) => (
+                        <tr
+                          key={index}
+                          className="app__tr">
+                          <td className="w-6 pl-4 app__td">
+                            <Menu
+                              as="div"
+                              className="app__menu_container">
+                              <div>
+                                <Menu.Button className="app__dropdown_btn">
+                                  <ChevronDownIcon
+                                    className="h-5 w-5"
+                                    aria-hidden="true"
+                                  />
+                                </Menu.Button>
+                              </div>
 
-                          <Transition
-                            as={Fragment}
-                            enter="transition ease-out duration-100"
-                            enterFrom="transform opacity-0 scale-95"
-                            enterTo="transform opacity-100 scale-100"
-                            leave="transition ease-in duration-75"
-                            leaveFrom="transform opacity-100 scale-100"
-                            leaveTo="transform opacity-0 scale-95">
-                            <Menu.Items className="app__dropdown_items">
-                              <div className="py-1">
-                                <Menu.Item>
-                                  <div
-                                    onClick={() =>
-                                      handleViewProducts(
-                                        item.agriko_ordered_products!
-                                      )
-                                    }
-                                    className="app__dropdown_item">
-                                    <ShoppingCart className="w-4 h-4" />
-                                    <span>View Products</span>
-                                  </div>
-                                </Menu.Item>
-                                {item.status !== 'Canceled' && (
-                                  <Menu.Item>
-                                    <div className="app__dropdown_item !cursor-default">
-                                      <CustomButton
-                                        containerStyles="app__btn_red_xs"
-                                        title="Cancel Transaction"
-                                        btnType="button"
-                                        handleClick={() =>
-                                          HandleConfirm(
-                                            'CancelTransaction',
-                                            item.id!
+                              <Transition
+                                as={Fragment}
+                                enter="transition ease-out duration-100"
+                                enterFrom="transform opacity-0 scale-95"
+                                enterTo="transform opacity-100 scale-100"
+                                leave="transition ease-in duration-75"
+                                leaveFrom="transform opacity-100 scale-100"
+                                leaveTo="transform opacity-0 scale-95">
+                                <Menu.Items className="app__dropdown_items">
+                                  <div className="py-1">
+                                    <Menu.Item>
+                                      <div
+                                        onClick={() =>
+                                          handleViewProducts(
+                                            item.agriko_ordered_products!
                                           )
                                         }
-                                      />
-                                    </div>
-                                  </Menu.Item>
-                                )}
+                                        className="app__dropdown_item">
+                                        <ShoppingCart className="w-4 h-4" />
+                                        <span>View Products</span>
+                                      </div>
+                                    </Menu.Item>
+                                    {item.status !== 'Canceled' &&
+                                      (hasAccess('manager') ||
+                                        hasAccess('superadmin') ||
+                                        superAdmins.includes(
+                                          session.user.email
+                                        )) && (
+                                        <Menu.Item>
+                                          <div className="app__dropdown_item !cursor-default">
+                                            <CustomButton
+                                              containerStyles="app__btn_red_xs"
+                                              title="Cancel Transaction"
+                                              btnType="button"
+                                              handleClick={() =>
+                                                HandleConfirm(
+                                                  'CancelTransaction',
+                                                  item.id!
+                                                )
+                                              }
+                                            />
+                                          </div>
+                                        </Menu.Item>
+                                      )}
+                                  </div>
+                                </Menu.Items>
+                              </Transition>
+                            </Menu>
+                          </td>
+                          <td className="app__td">
+                            <div className="pl-4">
+                              {format(
+                                new Date(item.transaction_date),
+                                'MMMM dd, yyyy'
+                              )}
+                            </div>
+                            {/* Mobile View */}
+                            <div className="md:hidden pl-4 mt-2 space-y-2">
+                              <div>
+                                <span className="app_td_mobile_label">
+                                  Customer:
+                                </span>{' '}
+                                {item.customer?.name}
                               </div>
-                            </Menu.Items>
-                          </Transition>
-                        </Menu>
-                      </td>
-                      <td className="app__td">
-                        <div className="pl-4">
-                          {format(
-                            new Date(item.transaction_date),
-                            'MMMM dd, yyyy'
-                          )}
-                        </div>
-                        {/* Mobile View */}
-                        <div className="md:hidden pl-4 mt-2 space-y-2">
-                          <div>
-                            <span className="app_td_mobile_label">
-                              Customer:
-                            </span>{' '}
+                              <div>
+                                <span className="app_td_mobile_label">
+                                  Total Amount:
+                                </span>{' '}
+                                {item.total_amount}
+                              </div>
+                              <div className="space-x-2">
+                                <CustomButton
+                                  containerStyles="app__btn_blue_xs"
+                                  title="Purchased Products"
+                                  btnType="button"
+                                  handleClick={() =>
+                                    handleViewProducts(
+                                      item.agriko_ordered_products!
+                                    )
+                                  }
+                                />
+                              </div>
+                            </div>
+                            {/* End Mobile View */}
+                          </td>
+                          <td className="hidden md:table-cell app__td">
                             {item.customer?.name}
-                          </div>
-                          <div>
-                            <span className="app_td_mobile_label">
-                              Total Amount:
-                            </span>{' '}
+                          </td>
+                          <td className="hidden md:table-cell app__td">
                             {item.total_amount}
-                          </div>
-                          <div className="space-x-2">
-                            <CustomButton
-                              containerStyles="app__btn_blue_xs"
-                              title="Purchased Products"
-                              btnType="button"
-                              handleClick={() =>
-                                handleViewProducts(
-                                  item.agriko_ordered_products!
-                                )
-                              }
-                            />
-                          </div>
-                        </div>
-                        {/* End Mobile View */}
-                      </td>
-                      <td className="hidden md:table-cell app__td">
-                        {item.customer?.name}
-                      </td>
-                      <td className="hidden md:table-cell app__td">
-                        {item.total_amount}
-                      </td>
-                      <td className="hidden md:table-cell app__td">
-                        {item.status === 'Canceled' && (
-                          <span className="app__status_container_red">
-                            Canceled
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                {loading && (
-                  <TableRowLoading
-                    cols={5}
-                    rows={2}
-                  />
+                          </td>
+                          <td className="hidden md:table-cell app__td">
+                            {item.status === 'Canceled' && (
+                              <span className="app__status_container_red">
+                                Canceled
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    {loading && (
+                      <TableRowLoading
+                        cols={5}
+                        rows={2}
+                      />
+                    )}
+                  </tbody>
+                </table>
+                {!loading && isDataEmpty && (
+                  <div className="app__norecordsfound">No records found.</div>
                 )}
-              </tbody>
-            </table>
-            {!loading && isDataEmpty && (
-              <div className="app__norecordsfound">No records found.</div>
-            )}
-          </div>
+              </div>
 
-          {/* Show More */}
-          {resultsCounter.results > resultsCounter.showing && !loading && (
-            <ShowMore handleShowMore={handleShowMore} />
+              {/* Show More */}
+              {resultsCounter.results > resultsCounter.showing && !loading && (
+                <ShowMore handleShowMore={handleShowMore} />
+              )}
+            </>
           )}
         </div>
       </div>

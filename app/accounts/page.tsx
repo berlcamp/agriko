@@ -181,7 +181,7 @@ const Page: React.FC = () => {
   const handleActiveChange = async () => {
     try {
       const { error } = await supabase
-        .from('ceedo_users')
+        .from('agriko_users')
         .update({ status: 'Active' })
         .eq('id', selectedId)
 
@@ -213,7 +213,7 @@ const Page: React.FC = () => {
   const isDataEmpty = !Array.isArray(list) || list.length < 1 || !list
 
   // Check access from permission settings or Super Admins
-  if (!hasAccess('collections') && !superAdmins.includes(session.user.email))
+  if (!hasAccess('superadmin') && !superAdmins.includes(session.user.email))
     return <Unauthorized />
 
   return (
@@ -255,6 +255,7 @@ const Page: React.FC = () => {
                   <th className="hidden md:table-cell app__th">
                     Login PassKey
                   </th>
+                  <th className="hidden md:table-cell app__th">Office</th>
                   <th className="hidden md:table-cell app__th">Status</th>
                 </tr>
               </thead>
@@ -341,6 +342,7 @@ const Page: React.FC = () => {
                               </span>{' '}
                               {item.temp_password}
                             </div>
+                            <div>{item.office.name}</div>
                             <div>
                               {item.status === 'Inactive' ? (
                                 <span className="app__status_container_red">
@@ -385,6 +387,9 @@ const Page: React.FC = () => {
                         <div>{item.temp_password}</div>
                       </td>
                       <td className="hidden md:table-cell app__td">
+                        <div>{item.office.name}</div>
+                      </td>
+                      <td className="hidden md:table-cell app__td">
                         {item.status === 'Inactive' ? (
                           <span className="app__status_container_red">
                             Inactive
@@ -399,7 +404,7 @@ const Page: React.FC = () => {
                   ))}
                 {loading && (
                   <TableRowLoading
-                    cols={5}
+                    cols={6}
                     rows={2}
                   />
                 )}

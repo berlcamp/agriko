@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client'
 
+import ProductsChart from '@/components/Charts/ProductsChart'
 import TwoColTableLoading from '@/components/Loading/TwoColTableLoading'
 import {
   LogsModal,
@@ -28,16 +29,34 @@ import {
   PlusCircleIcon,
 } from '@heroicons/react/20/solid'
 import { PlusCircledIcon } from '@radix-ui/react-icons'
-import { LayoutGrid, List } from 'lucide-react'
+import { BarChart3Icon, LayoutGrid, List } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import React, { Fragment, useEffect, useState } from 'react'
 import AddEditModal from './AddEditModal'
+
+const colors = [
+  '#55d978',
+  '#d9ca55',
+  '#d9985f',
+  '#5caecc',
+  '#adedd9',
+  '#d0e3f7',
+  '#c3ffad',
+  '#ffc4ef',
+  '#87f5ff',
+  '#8ce37d',
+  '#6dd6b5',
+]
 
 const Page: React.FC = () => {
   const [viewType, setViewType] = useState('grid')
   const [list, setList] = useState<RawMaterialTypes[] | null>(null)
   const [refetch, setRefetch] = useState(false)
   const [addOrAdjust, setAddOrAdjust] = useState('')
+
+  // Products chart data
+  const [dataSets, setDataSets] = useState([])
+  const [labels, setLabels] = useState<string[] | []>([])
 
   // loading state
   const [loading, setLoading] = useState(false)
@@ -76,15 +95,35 @@ const Page: React.FC = () => {
         .eq('status', 'Active')
         .order('name', { ascending: true })
 
+      const dataSetsData: any = []
+
       if (rawMaterials) {
         setList(rawMaterials)
+
+        rawMaterials.forEach((material: RawMaterialTypes) => {
+          // Create datasets array
+          if (material.quantity > 0) {
+            const randomIdx = Math.floor(Math.random() * 11)
+            dataSetsData.push({
+              label: `${material.name} (${material.unit})`,
+              data: [material.quantity],
+              bgColor:
+                Number(material.quantity) > Number(material.quantity_warning)
+                  ? '#37cf32'
+                  : '#d4493f',
+            })
+          }
+        })
       }
       setLoading(false)
+
+      setLabels(['Stocks'])
+      setDataSets(dataSetsData)
     })()
   }, [refetch])
 
   // Check access from permission settings or Super Admins
-  if (!hasAccess('collections') && !superAdmins.includes(session.user.email))
+  if (!hasAccess('superadmin') && !superAdmins.includes(session.user.email))
     return <Unauthorized />
 
   return (
@@ -108,6 +147,14 @@ const Page: React.FC = () => {
             onClick={() => setViewType('list')}
             className={`${
               viewType === 'list'
+                ? 'w-8 h-8 bg-gray-400 p-1 rounded-lg cursor-pointer'
+                : 'w-7 h-7 cursor-pointer'
+            }`}
+          />
+          <BarChart3Icon
+            onClick={() => setViewType('chart')}
+            className={`${
+              viewType === 'chart'
                 ? 'w-8 h-8 bg-gray-400 p-1 rounded-lg cursor-pointer'
                 : 'w-7 h-7 cursor-pointer'
             }`}
@@ -268,12 +315,36 @@ const Page: React.FC = () => {
                             <div>{item.unit}</div>
                           </td>
                           <td className="app__td">
-                            <div>{item.quantity}</div>
+                            <div
+                              className={`${
+                                Number(item.quantity_warning) >=
+                                  Number(item.quantity) &&
+                                '!text-red-600 font-bold'
+                              }`}>
+                              {item.quantity}
+                            </div>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </>
+            )}
+
+            {/* Chart View */}
+            {viewType === 'chart' && (
+              <>
+                <div className="app__title">
+                  <Title title="Raw Materials Inventory" />
+                </div>
+                <div className="mx-4 bg-white mt-2">
+                  <div className="p-2 h-[800px]">
+                    <ProductsChart
+                      labels={labels}
+                      dataSets={dataSets}
+                    />
+                  </div>
                 </div>
               </>
             )}

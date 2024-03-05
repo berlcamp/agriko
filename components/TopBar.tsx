@@ -2,8 +2,13 @@
 import OfficeDropDown from '@/components/TopBars/OfficeDropDown'
 import TopMenu from '@/components/TopBars/TopMenu'
 import UserDropdown from '@/components/TopBars/UserDropdown'
+import { superAdmins } from '@/constants'
+import { useFilter } from '@/context/FilterContext'
+import { useSupabase } from '@/context/SupabaseProvider'
 
 function TopBar() {
+  const { hasAccess } = useFilter()
+  const { session } = useSupabase()
   return (
     // <div className='absolute top-1 z-10 right-4 flex space-x-2'>
     //     <TopMenu/>
@@ -14,7 +19,10 @@ function TopBar() {
       <div className="-translate-x-full lg:translate-x-0 z-30 w-64">&nbsp;</div>
       <div className="flex flex-1 p-2 items-center bg-gray-50 justify-end">
         <OfficeDropDown darkMode={true} />
-        <TopMenu darkMode={false} />
+        {(hasAccess('superadmin') ||
+          superAdmins.includes(session.user.email)) && (
+          <TopMenu darkMode={false} />
+        )}
         {/* <Notifications darkMode={false}/> */}
         <UserDropdown darkMode={false} />
       </div>

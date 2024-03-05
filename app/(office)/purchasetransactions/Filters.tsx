@@ -58,7 +58,7 @@ const Filters = ({
 
   const [cashiers, setCashiers] = useState<AccountTypes[] | []>([])
 
-  const { currentUser, supabase } = useSupabase()
+  const { currentUser, systemUsers, supabase } = useSupabase()
   const activeUser: AccountTypes = currentUser
 
   //
@@ -106,14 +106,10 @@ const Filters = ({
 
     // Fetch cashiers
     ;(async () => {
-      const { data: cashiersData } = await supabase
-        .from('agriko_users')
-        .select()
-
-      const filteredCashiers = cashiersData.filter((c: AccountTypes) =>
-        c.offices.find(
-          (o) => o.toString() === activeUser.active_office_id.toString()
-        )
+      const filteredCashiers = systemUsers.filter(
+        (c: AccountTypes) =>
+          c.active_office_id.toString() ===
+          activeUser.active_office_id.toString()
       )
 
       setCashiers(filteredCashiers)

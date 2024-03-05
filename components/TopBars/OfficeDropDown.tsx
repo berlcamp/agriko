@@ -4,6 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { superAdmins } from '@/constants'
 import { useFilter } from '@/context/FilterContext'
 import { useSupabase } from '@/context/SupabaseProvider'
 import { AccountTypes, OfficeTypes } from '@/types'
@@ -20,15 +21,13 @@ interface propTypes {
 const OfficeDropDown = ({ darkMode }: propTypes) => {
   const [loading, setLoading] = useState(false)
   const { currentUser, systemOffices, supabase, session } = useSupabase()
-  const { setToast } = useFilter()
+  const { setToast, hasAccess } = useFilter()
 
   const router = useRouter()
 
   const currUser: AccountTypes = currentUser
   const offices: OfficeTypes[] = systemOffices
-  const filteredOffices: OfficeTypes[] = offices.filter((obj) =>
-    currUser.offices.includes(obj.id)
-  )
+  const filteredOffices: OfficeTypes[] = offices
 
   const office = offices.find((w) => w.id === currUser.active_office_id)
 
@@ -59,45 +58,57 @@ const OfficeDropDown = ({ darkMode }: propTypes) => {
   return (
     <>
       <div className="relative inline-block mr-4">
-        <Popover>
-          <PopoverTrigger>
+        {!hasAccess('superadmin') &&
+          !superAdmins.includes(session.user.email) && (
             <div className="flex items-center space-x-1">
               <span className="text-sm text-gray-600">Office:</span>
               <div className="flex items-center justify-between space-x-2 text-sm px-2 py-1 border rounded-md font-bold text-gray-700">
                 <span>{office?.name}</span>
-                <ChevronDown className="w-5 h-5" />
               </div>
             </div>
-          </PopoverTrigger>
-          <PopoverContent>
-            <div className="space-y-1">
-              {loading ? (
-                <OneColLayoutLoading />
-              ) : (
-                <>
-                  {filteredOffices.map((w, index) => (
-                    <React.Fragment key={index}>
-                      {w.id === currUser.active_office_id ? (
-                        <div className="flex items-center space-x-1 rounded-lg hover:bg-gray-100 px-2 py-1">
-                          <div className="flex items-center justify-between space-x-2 text-sm font-bold text-green-800">
-                            <span>{w.name}</span>
-                            <Check className="w-5 h-5" />
+          )}
+        {(hasAccess('superadmin') ||
+          superAdmins.includes(session.user.email)) && (
+          <Popover>
+            <PopoverTrigger>
+              <div className="flex items-center space-x-1">
+                <span className="text-sm text-gray-600">Office:</span>
+                <div className="flex items-center justify-between space-x-2 text-sm px-2 py-1 border rounded-md font-bold text-gray-700">
+                  <span>{office?.name}</span>
+                  <ChevronDown className="w-5 h-5" />
+                </div>
+              </div>
+            </PopoverTrigger>
+            <PopoverContent>
+              <div className="space-y-1">
+                {loading ? (
+                  <OneColLayoutLoading />
+                ) : (
+                  <>
+                    {filteredOffices.map((w, index) => (
+                      <React.Fragment key={index}>
+                        {w.id === currUser.active_office_id ? (
+                          <div className="flex items-center space-x-1 rounded-lg hover:bg-gray-100 px-2 py-1">
+                            <div className="flex items-center justify-between space-x-2 text-sm font-bold text-green-800">
+                              <span>{w.name}</span>
+                              <Check className="w-5 h-5" />
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <div
-                          onClick={() => handleSwitchOffice(w.id)}
-                          className="flex items-center space-x-1 rounded-lg cursor-pointer hover:bg-gray-100 px-2 py-1">
-                          <span className="text-sm">{w.name}</span>
-                        </div>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </>
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
+                        ) : (
+                          <div
+                            onClick={() => handleSwitchOffice(w.id)}
+                            className="flex items-center space-x-1 rounded-lg cursor-pointer hover:bg-gray-100 px-2 py-1">
+                            <span className="text-sm">{w.name}</span>
+                          </div>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
       </div>
     </>
   )

@@ -22,7 +22,7 @@ export default function LoginBox() {
 
     setSigningIn(true)
 
-    // Check if the user is on ceedo_users table
+    // Check if the user is on agriko_users table
     const { data: user, error: userError } = await supabase
       .from('agriko_users')
       .select()

@@ -1,19 +1,19 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { ConfirmModal, UserBlock } from "@/components/index";
-import { useFilter } from "@/context/FilterContext";
-import { useSupabase } from "@/context/SupabaseProvider";
-import type { AccountTypes, UserAccessTypes, namesType } from "@/types/index";
-import { logError } from "@/utils/fetchApi";
-import { XMarkIcon } from "@heroicons/react/24/solid";
-import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
-import { nanoid } from "nanoid";
+import { ConfirmModal, UserBlock } from '@/components/index'
+import { useFilter } from '@/context/FilterContext'
+import { useSupabase } from '@/context/SupabaseProvider'
+import type { AccountTypes, UserAccessTypes, namesType } from '@/types/index'
+import { logError } from '@/utils/fetchApi'
+import { XMarkIcon } from '@heroicons/react/24/solid'
+import { nanoid } from 'nanoid'
+import { useRouter } from 'next/navigation'
+import React, { useEffect, useState } from 'react'
 
 interface ChooseUsersProps {
-  multiple: boolean;
-  type: string;
-  title: string;
-  users: UserAccessTypes[];
+  multiple: boolean
+  type: string
+  title: string
+  users: UserAccessTypes[]
 }
 
 export default function ChooseUsers({
@@ -22,35 +22,37 @@ export default function ChooseUsers({
   users,
   title,
 }: ChooseUsersProps) {
-  const [searchManager, setSearchManager] = useState("");
-  const [selectedId, setSelectedId] = useState("");
+  const [searchManager, setSearchManager] = useState('')
+  const [selectedId, setSelectedId] = useState('')
   const [searchManagersResults, setSearchManagersResults] = useState<
     namesType[] | []
-  >([]);
+  >([])
   const [selectedManagers, setSelectedManagers] = useState<
     UserAccessTypes[] | []
-  >([]);
+  >([])
 
-  const [showConfirmRemoveModal, setShowConfirmRemoveModal] = useState(false);
+  const [showConfirmRemoveModal, setShowConfirmRemoveModal] = useState(false)
 
-  const { systemUsers, supabase }: { systemUsers: AccountTypes[]; supabase: any } =
-    useSupabase();
-  const { setToast } = useFilter();
+  const {
+    systemUsers,
+    supabase,
+  }: { systemUsers: AccountTypes[]; supabase: any } = useSupabase()
+  const { setToast } = useFilter()
 
-  const router = useRouter();
+  const router = useRouter()
 
   const handleSearchUser = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchManager("");
+    setSearchManager('')
 
-    setSearchManager(e.target.value);
+    setSearchManager(e.target.value)
 
     if (e.target.value.trim().length < 3) {
-      setSearchManagersResults([]);
-      return;
+      setSearchManagersResults([])
+      return
     }
 
     // Search user
-    const searchWords = e.target.value.split(" ");
+    const searchWords = e.target.value.split(' ')
     const results = systemUsers.filter((user) => {
       // exclude already selected users
       if (
@@ -58,15 +60,15 @@ export default function ChooseUsers({
           (obj) => obj.user_id.toString() === user.id.toString()
         )
       )
-        return false;
+        return false
 
       const fullName =
-        `${user.lastname} ${user.firstname} ${user.middlename}`.toLowerCase();
-      return searchWords.every((word) => fullName.includes(word));
-    });
+        `${user.lastname} ${user.firstname} ${user.middlename}`.toLowerCase()
+      return searchWords.every((word) => fullName.includes(word))
+    })
 
-    setSearchManagersResults(results);
-  };
+    setSearchManagersResults(results)
+  }
 
   const handleSelected = async (item: namesType) => {
     // Update database
@@ -74,21 +76,21 @@ export default function ChooseUsers({
       if (!multiple) {
         // delete existing recording first
         const { error } = await supabase
-          .from("ceedo_system_access")
+          .from('agriko_system_access')
           .delete()
-          .eq("org_id", process.env.NEXT_PUBLIC_ORG_ID)
-          .eq("type", type);
+          .eq('org_id', process.env.NEXT_PUBLIC_ORG_ID)
+          .eq('type', type)
         if (error) {
           void logError(
-            "Remove user access",
-            "ceedo_system_access",
-            "",
+            'Remove user access',
+            'agriko_system_access',
+            '',
             error.message
-          );
+          )
           setToast(
-            "error",
-            "Error saving, please reload the page and try again."
-          );
+            'error',
+            'Error saving, please reload the page and try again.'
+          )
         }
       }
 
@@ -96,101 +98,100 @@ export default function ChooseUsers({
         user_id: item.id,
         type,
         org_id: process.env.NEXT_PUBLIC_ORG_ID,
-      };
+      }
       const { error: error2 } = await supabase
-        .from("ceedo_system_access")
-        .insert(insertData);
+        .from('agriko_system_access')
+        .insert(insertData)
 
       if (error2) {
         void logError(
-          "Add user access",
-          "ceedo_system_access",
+          'Add user access',
+          'agriko_system_access',
           JSON.stringify(insertData),
           error2.message
-        );
-        setToast(
-          "error",
-          "Error saving, please reload the page and try again."
-        );
+        )
+        setToast('error', 'Error saving, please reload the page and try again.')
       } else {
         // setSelectedManagers
         const newData = {
-          ceedo_user: item,
+          agriko_user: item,
           user_id: item.id,
           type,
-        };
-
-        if (multiple) {
-          const updatedData = [...selectedManagers, newData];
-          setSelectedManagers(updatedData);
-        } else {
-          const updatedData = [newData];
-          setSelectedManagers(updatedData);
         }
 
-        setToast("success", "Successfully saved");
+        if (multiple) {
+          const updatedData = [...selectedManagers, newData]
+          setSelectedManagers(updatedData)
+        } else {
+          const updatedData = [newData]
+          setSelectedManagers(updatedData)
+        }
 
-        router.refresh();
+        setToast('success', 'Successfully saved')
+
+        router.refresh()
       }
     } catch (err) {
-      console.log(err);
+      console.log(err)
     }
 
     // Resets
-    setSearchManagersResults([]);
+    setSearchManagersResults([])
 
-    setSearchManager("");
-  };
+    setSearchManager('')
+  }
 
   const handleRemoveSelected = (id: string) => {
-    setSelectedId(id);
-    setShowConfirmRemoveModal(true);
-  };
+    setSelectedId(id)
+    setShowConfirmRemoveModal(true)
+  }
 
   const handleConfirmedRemove = async () => {
     // update database
     const { error } = await supabase
-      .from("ceedo_system_access")
+      .from('agriko_system_access')
       .delete()
-      .eq("user_id", selectedId)
-      .eq("type", type);
+      .eq('user_id', selectedId)
+      .eq('type', type)
 
     if (error) {
       void logError(
-        "remove user access",
-        "ceedo_system_access",
-        "",
+        'remove user access',
+        'agriko_system_access',
+        '',
         error.message
-      );
-      setToast("error", "Error saving, please reload the page and try again.");
+      )
+      setToast('error', 'Error saving, please reload the page and try again.')
     } else {
       const updatedItems = selectedManagers?.filter(
         (item: UserAccessTypes) => item.user_id.toString() !== selectedId
-      );
-      setSelectedManagers(updatedItems);
-      setSelectedId("");
-      setToast("success", "Successfully saved");
+      )
+      setSelectedManagers(updatedItems)
+      setSelectedId('')
+      setToast('success', 'Successfully saved')
     }
 
-    setShowConfirmRemoveModal(false);
-  };
+    setShowConfirmRemoveModal(false)
+  }
 
   useEffect(() => {
-    const managers = users.filter((user) => user.type === type);
-    setSelectedManagers(managers);
-  }, []);
+    const managers = users.filter((user) => user.type === type)
+    setSelectedManagers(managers)
+  }, [])
 
   return (
-    <div className="app__form_field_container">
+    <div className="">
       <div className="w-full">
         <div className="app__label_standard">{title}:</div>
         <div className="bg-white p-1 border border-gray-300 rounded-sm">
           <div className="space-x-2">
             {selectedManagers.map((item: UserAccessTypes) => (
-              <div key={nanoid()} className="mb-1 inline-flex">
+              <div
+                key={nanoid()}
+                className="mb-1 inline-flex">
                 <span className="inline-flex items-center text-sm  border border-gray-400 rounded-sm px-1 bg-gray-300">
-                  {item.ceedo_user.firstname} {item.ceedo_user.middlename}{" "}
-                  {item.ceedo_user.lastname}
+                  {item.agriko_user.firstname} {item.agriko_user.middlename}{' '}
+                  {item.agriko_user.lastname}
                   <XMarkIcon
                     onClick={() => handleRemoveSelected(item.user_id)}
                     className="w-4 h-4 ml-2 cursor-pointer"
@@ -214,8 +215,7 @@ export default function ChooseUsers({
                   <div
                     key={index}
                     onClick={async () => await handleSelected(item)}
-                    className="app__search_user_results"
-                  >
+                    className="app__search_user_results">
                     <UserBlock user={item} />
                   </div>
                 ))}
@@ -234,5 +234,5 @@ export default function ChooseUsers({
         />
       )}
     </div>
-  );
+  )
 }

@@ -12,7 +12,6 @@ import type { AccountTypes, OfficeTypes, UserAccessTypes } from '@/types/index'
 import { logError } from '@/utils/fetchApi'
 import type { Metadata } from 'next'
 
-import ChooseOfficePage from '@/components/ChooseOfficePage'
 import ErrorPage from '@/components/ErrorPage'
 // import { Inter } from 'next/font/google'
 // const inter = Inter({ subsets: ['latin'] })
@@ -117,24 +116,11 @@ export default async function RootLayout({
         </html>
       )
     }
-
-    if (currUser && sysOffices && !currUser.active_office_id) {
-      return (
-        <html lang="en">
-          <body className={`relative bg-gray-800`}>
-            <ChooseOfficePage
-              currUser={currUser}
-              sysOffices={sysOffices}
-            />
-          </body>
-        </html>
-      )
-    }
   }
 
   return (
     <html lang="en">
-      <body className={`relative bg-gray-200`}>
+      <body className={`relative bg-gray-50`}>
         <SupabaseProvider
           systemAccess={sysAccess}
           session={session}

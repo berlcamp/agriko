@@ -7,7 +7,7 @@ export async function fetchAccounts (filters: { filterUser?: string, filterStatu
   try {
     let query = supabase
       .from('agriko_users')
-      .select('*', { count: 'exact' })
+      .select('*, office:active_office_id(*)', { count: 'exact' })
       .neq('email', 'berlcamp@gmail.com')
 
 

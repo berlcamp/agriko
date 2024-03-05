@@ -11,7 +11,7 @@ export interface SelectUserNamesProps {
 export interface UserAccessTypes {
   user_id: string
   type: string
-  ceedo_user: namesType
+  agriko_user: namesType
 }
 
 export interface searchUser {
@@ -53,8 +53,8 @@ export interface AccountTypes {
   org_id: string
   created_by: string
   temp_password: string
-  offices: string[]
   active_office_id: string
+  office: OfficeTypes
 }
 
 export interface excludedItemsTypes {

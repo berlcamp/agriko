@@ -1,5 +1,6 @@
 'use client'
 import ProductsChart from '@/components/Charts/ProductsChart'
+import TwoColTableLoading from '@/components/Loading/TwoColTableLoading'
 import {
   CustomButton,
   MainSideBar,
@@ -39,6 +40,7 @@ export default function Page() {
 
   // Loading
   const [downloading, setDownloading] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const { supabase, currentUser } = useSupabase()
 
@@ -55,6 +57,7 @@ export default function Page() {
   const [netSales, setNetSales] = useState(0)
 
   const fetchProducts = async () => {
+    setLoading(true)
     const { data: productsData } = await supabase
       .from('agriko_products')
       .select()
@@ -128,6 +131,7 @@ export default function Page() {
 
     setLabels([label])
     setDataSets(dataSetsData)
+    setLoading(false)
   }
 
   const handleDownloadExcel = async () => {
@@ -204,7 +208,6 @@ export default function Page() {
 
   useEffect(() => {
     fetchProducts()
-    console.log('filterCashier', filterCashier)
   }, [filterCashier, filterFrom, setFilterTo])
 
   return (
@@ -226,62 +229,70 @@ export default function Page() {
             setFilterCashier={setFilterCashier}
           />
         </div>
-        <div className="mx-4 flex justify-end">
-          <CustomButton
-            containerStyles="app__btn_blue"
-            isDisabled={downloading}
-            title={downloading ? 'Downloading...' : 'Download Excel'}
-            btnType="submit"
-            handleClick={handleDownloadExcel}
-          />
-        </div>
-        <div className="mx-4 mt-2 bg-white">
-          <div className="border-b grid grid-cols-4">
-            <div className="hover:bg-slate-100 text-gray-700">
-              <div className="p-2">
-                <div className="text-center font-extralight">Gross Sales</div>
-                <div className="flex items-center justify-center">
-                  <TbCurrencyPeso className="w-7 h-7" />
-                  <span className="text-2xl">{grossSales}</span>
+
+        {loading && <TwoColTableLoading />}
+        {!loading && (
+          <>
+            <div className="mx-4 flex justify-end">
+              <CustomButton
+                containerStyles="app__btn_blue"
+                isDisabled={downloading}
+                title={downloading ? 'Downloading...' : 'Download Excel'}
+                btnType="submit"
+                handleClick={handleDownloadExcel}
+              />
+            </div>
+            <div className="mx-4 mt-2 bg-white">
+              <div className="border-b grid grid-cols-4">
+                <div className="hover:bg-slate-100 text-gray-700">
+                  <div className="p-2">
+                    <div className="text-center font-extralight">
+                      Gross Sales
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <TbCurrencyPeso className="w-7 h-7" />
+                      <span className="text-2xl">{grossSales}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="hover:bg-slate-100 text-gray-700">
+                  <div className="p-2">
+                    <div className="text-center font-extralight">Refunds</div>
+                    <div className="flex items-center justify-center">
+                      <TbCurrencyPeso className="w-7 h-7" />
+                      <span className="text-2xl">{refunds}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="hover:bg-slate-100 text-gray-700">
+                  <div className="p-2">
+                    <div className="text-center font-extralight">Discounts</div>
+                    <div className="flex items-center justify-center">
+                      <TbCurrencyPeso className="w-7 h-7" />
+                      <span className="text-2xl">{discounts}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="hover:bg-slate-100 text-gray-700">
+                  <div className="p-2">
+                    <div className="text-center font-extralight">Net Sales</div>
+                    <div className="flex items-center justify-center">
+                      <TbCurrencyPeso className="w-7 h-7" />
+                      <span className="text-2xl">{netSales}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="hover:bg-slate-100 text-gray-700">
-              <div className="p-2">
-                <div className="text-center font-extralight">Refunds</div>
-                <div className="flex items-center justify-center">
-                  <TbCurrencyPeso className="w-7 h-7" />
-                  <span className="text-2xl">{refunds}</span>
-                </div>
+              <div className="p-2 mt-4">Sales by Product</div>
+              <div className="p-2 h-[800px]">
+                <ProductsChart
+                  labels={labels}
+                  dataSets={dataSets}
+                />
               </div>
             </div>
-            <div className="hover:bg-slate-100 text-gray-700">
-              <div className="p-2">
-                <div className="text-center font-extralight">Discounts</div>
-                <div className="flex items-center justify-center">
-                  <TbCurrencyPeso className="w-7 h-7" />
-                  <span className="text-2xl">{discounts}</span>
-                </div>
-              </div>
-            </div>
-            <div className="hover:bg-slate-100 text-gray-700">
-              <div className="p-2">
-                <div className="text-center font-extralight">Net Sales</div>
-                <div className="flex items-center justify-center">
-                  <TbCurrencyPeso className="w-7 h-7" />
-                  <span className="text-2xl">{netSales}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="p-2 mt-4">Sales by Product</div>
-          <div className="p-2 h-[800px]">
-            <ProductsChart
-              labels={labels}
-              dataSets={dataSets}
-            />
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </>
   )
