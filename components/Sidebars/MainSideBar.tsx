@@ -131,7 +131,7 @@ export default function MainSideBar() {
       {/* Dumingag-Warehouse access only */}
       {activeUser.active_office_id.toString() === '1' && (
         <>
-          <ul className="mt-8 space-y-2 border-gray-700">
+          <ul className="space-y-2 border-gray-700">
             <li>
               <div className="flex items-center text-gray-500 font-semibold items-centers space-x-1 px-2">
                 <ListChecks className="w-4 h-4" />

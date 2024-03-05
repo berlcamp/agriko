@@ -381,7 +381,7 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
   return (
     <>
       <div className="app__modal_wrapper">
-        <div className="app__modal_wrapper2_large">
+        <div className="app__modal_wrapper2">
           <div className="app__modal_wrapper3">
             <div className="app__modal_header">
               <h5 className="app__modal_header_text">Product Details</h5>

@@ -1,11 +1,6 @@
 'use client'
 
-import {
-  DashboardCards,
-  MainSideBar,
-  Sidebar,
-  TopBar,
-} from '@/components/index'
+import { MainSideBar, Sidebar, TopBar } from '@/components/index'
 import Image from 'next/image'
 
 export default function Page() {
@@ -17,20 +12,16 @@ export default function Page() {
       <TopBar />
       <div className="app__main">
         <div className="text-center">
-          <h1 className="font-bold text-4xl text-gray-700">Welcome!</h1>
+          <h1 className="font-bold text-4xl text-gray-700">Welcome back!</h1>
         </div>
         <div className="flex items-center justify-center relative">
           <Image
             src="/logo.png"
-            width={220}
-            height={220}
+            width={320}
+            height={320}
             priority={true}
             alt="Logo Agriko"
           />
-        </div>
-
-        <div className="mx-4">
-          <DashboardCards />
         </div>
       </div>
     </>

@@ -399,7 +399,7 @@ const Page: React.FC = () => {
             {viewType === 'chart' && (
               <>
                 <div className="app__title">
-                  <Title title="Products Inventory" />
+                  <Title title="Final Products Inventory" />
                 </div>
                 <div className="mx-4 bg-slate-100 mt-2">
                   <div className="p-2">
