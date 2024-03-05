@@ -237,14 +237,14 @@ export default function Page() {
               <CustomButton
                 containerStyles="app__btn_blue"
                 isDisabled={downloading}
-                title={downloading ? 'Downloading...' : 'Download Excel'}
+                title={downloading ? 'Downloading...' : 'Export To Excel'}
                 btnType="submit"
                 handleClick={handleDownloadExcel}
               />
             </div>
-            <div className="mx-4 mt-2 bg-white">
+            <div className="mx-4 mt-2 bg-slate-100">
               <div className="border-b grid grid-cols-4">
-                <div className="hover:bg-slate-100 text-gray-700">
+                <div className="hover:bg-slate-200 text-gray-700">
                   <div className="p-2">
                     <div className="text-center font-extralight">
                       Gross Sales
@@ -255,7 +255,7 @@ export default function Page() {
                     </div>
                   </div>
                 </div>
-                <div className="hover:bg-slate-100 text-gray-700">
+                <div className="hover:bg-slate-200 text-gray-700">
                   <div className="p-2">
                     <div className="text-center font-extralight">Refunds</div>
                     <div className="flex items-center justify-center">
@@ -264,7 +264,7 @@ export default function Page() {
                     </div>
                   </div>
                 </div>
-                <div className="hover:bg-slate-100 text-gray-700">
+                <div className="hover:bg-slate-200 text-gray-700">
                   <div className="p-2">
                     <div className="text-center font-extralight">Discounts</div>
                     <div className="flex items-center justify-center">
@@ -273,7 +273,7 @@ export default function Page() {
                     </div>
                   </div>
                 </div>
-                <div className="hover:bg-slate-100 text-gray-700">
+                <div className="hover:bg-slate-200 text-gray-700">
                   <div className="p-2">
                     <div className="text-center font-extralight">Net Sales</div>
                     <div className="flex items-center justify-center">
@@ -284,7 +284,7 @@ export default function Page() {
                 </div>
               </div>
               <div className="p-2 mt-4">Sales by Product</div>
-              <div className="p-2 h-[800px]">
+              <div className="p-2">
                 <ProductsChart
                   labels={labels}
                   dataSets={dataSets}

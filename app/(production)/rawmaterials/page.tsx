@@ -109,7 +109,7 @@ const Page: React.FC = () => {
               data: [material.quantity],
               bgColor:
                 Number(material.quantity) > Number(material.quantity_warning)
-                  ? '#37cf32'
+                  ? '#5caecc'
                   : '#d4493f',
             })
           }
@@ -338,8 +338,8 @@ const Page: React.FC = () => {
                 <div className="app__title">
                   <Title title="Raw Materials Inventory" />
                 </div>
-                <div className="mx-4 bg-white mt-2">
-                  <div className="p-2 h-[800px]">
+                <div className="mx-4 bg-slate-100 mt-2">
+                  <div className="p-2">
                     <ProductsChart
                       labels={labels}
                       dataSets={dataSets}

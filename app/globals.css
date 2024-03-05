@@ -38,10 +38,10 @@ body {
   @apply w-full text-sm text-left text-gray-600 border-t
 }
 .app__thead {
-  @apply text-xs border-b uppercase bg-gray-100
+  @apply text-xs border-b uppercase bg-slate-100
 }
 .app__tr {
-  @apply bg-gray-50 text-xs border-b hover:bg-amber-50
+  @apply bg-slate-50 text-xs border-b hover:bg-amber-50
 }
 .app__th {
   @apply py-2 px-2 text-gray-700 align-top
@@ -269,7 +269,7 @@ body {
   @apply font-medium text-blue-600 border px-1 py-px border-blue-400 bg-blue-100
 }
 .app__product_grid_container {
-  @apply inline-flex mr-4 mt-4 border border-gray-400 p-2 rounded-xl bg-white
+  @apply inline-flex mr-4 mt-4 border border-gray-400 p-2 rounded-xl bg-blue-100
 }
 .app__product_grid_container_2 {
   @apply flex flex-col items-center space-y-2
