@@ -362,11 +362,14 @@ const AddEditModal = ({ editData, hideModal }: ModalProps) => {
             : undefined
 
           if (!findInSelected) {
-            rawMaterialsDropdown.push({
-              id: item.id,
-              label: `${item.name} (${item.unit})`,
-              value: `${item.name} (${item.unit})`,
-            })
+            // Only active raw materials
+            if (item.status === 'Active') {
+              rawMaterialsDropdown.push({
+                id: item.id,
+                label: `${item.name} (${item.unit})`,
+                value: `${item.name} (${item.unit})`,
+              })
+            }
           }
         })
 

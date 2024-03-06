@@ -102,7 +102,6 @@ const Page: React.FC = () => {
       const { data: allProducts } = await supabase
         .from('agriko_products')
         .select('*')
-        .eq('status', 'Active')
 
       const dataSetsData: any = []
 
@@ -187,7 +186,7 @@ const Page: React.FC = () => {
             className={`${
               viewType === 'grid'
                 ? 'w-8 h-8 bg-gray-300 p-1 rounded-lg cursor-pointer'
-                : 'w-7 h-7 cursor-pointer'
+                : 'w-7 h-7 cursor-pointer text-gray-700'
             }`}
           />
           <List
@@ -195,7 +194,7 @@ const Page: React.FC = () => {
             className={`${
               viewType === 'list'
                 ? 'w-8 h-8 bg-gray-300 p-1 rounded-lg cursor-pointer'
-                : 'w-7 h-7 cursor-pointer'
+                : 'w-7 h-7 cursor-pointer text-gray-700'
             }`}
           />
           <BarChart3Icon
@@ -203,7 +202,7 @@ const Page: React.FC = () => {
             className={`${
               viewType === 'chart'
                 ? 'w-8 h-8 bg-gray-300 p-1 rounded-lg cursor-pointer'
-                : 'w-7 h-7 cursor-pointer'
+                : 'w-7 h-7 cursor-pointer text-gray-700'
             }`}
           />
         </div>

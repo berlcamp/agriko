@@ -92,7 +92,6 @@ const Page: React.FC = () => {
       const { data: rawMaterials } = await supabase
         .from('agriko_rawmaterials')
         .select()
-        .eq('status', 'Active')
         .order('name', { ascending: true })
 
       const dataSetsData: any = []

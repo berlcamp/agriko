@@ -360,11 +360,14 @@ const TransferModal = ({ hideModal }: ModalProps) => {
             value: `${p.product.name} (${size})`,
             transfer_quantity: 0,
           })
-          prodDropdown.push({
-            product_id: p.product.id,
-            label: `${p.product.name} (${size})`,
-            value: `${p.product.name} (${size})`,
-          })
+          // Only Active products
+          if (p.product.status === 'Active') {
+            prodDropdown.push({
+              product_id: p.product.id,
+              label: `${p.product.name} (${size})`,
+              value: `${p.product.name} (${size})`,
+            })
+          }
         })
 
         setProductsList(prodArr)
