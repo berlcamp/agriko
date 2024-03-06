@@ -15,9 +15,9 @@ export default function MainMenu() {
                   <UserIcon className="w-8 h-8" />
                 </div>
                 <div>
-                  <div className="app__menu_item_label">User Accounts</div>
+                  <div className="app__menu_item_label">Employee Accounts</div>
                   <div className="app__menu_item_label_description">
-                    Login Details
+                    Account Details
                   </div>
                 </div>
               </div>

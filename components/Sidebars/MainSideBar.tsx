@@ -1,7 +1,12 @@
 'use client'
 
 import { useSupabase } from '@/context/SupabaseProvider'
-import { AccountTypes } from '@/types'
+import {
+  AccountTypes,
+  FinalProductTypes,
+  OfficeProductTypes,
+  RawMaterialTypes,
+} from '@/types'
 import { ChartBarIcon } from '@heroicons/react/20/solid'
 import { ListChecks, ShoppingBasket, ShoppingCart } from 'lucide-react'
 import Link from 'next/link'
@@ -15,8 +20,11 @@ export default function MainSideBar() {
 
   // Counters
   const [incomingCount, setIncomingCount] = useState('')
+  const [quantityAlertCount, setQuantityAlertCount] = useState('')
+  const [rawAlertCount, setRawAlertCount] = useState('')
+  const [finalProductAlertCount, setFinalProductAlertCount] = useState('')
 
-  const counter = async () => {
+  const officeCounter = async () => {
     // Incoming Products Counter
     const { count } = await supabase
       .from('agriko_transfer_transactions')
@@ -27,12 +35,64 @@ export default function MainSideBar() {
     if (count > 0) {
       setIncomingCount(count)
     }
+
+    // In-stock products
+    const { data: officeProductsData } = await supabase
+      .from('agriko_office_products')
+      .select('quantity, product:product_id(quantity_warning)')
+      .eq('office_id', activeUser.active_office_id)
+
+    let lowStocks = 0
+    officeProductsData.forEach((ofp: OfficeProductTypes) => {
+      if (Number(ofp.quantity) <= Number(ofp.product.quantity_warning)) {
+        lowStocks++
+      }
+    })
+    if (lowStocks > 0) {
+      setQuantityAlertCount(lowStocks.toString())
+    }
+  }
+
+  const warehouseCounter = async () => {
+    // Raw Materials
+    const { data: rawMaterialsData } = await supabase
+      .from('agriko_rawmaterials')
+      .select('quantity, quantity_warning')
+
+    let lowRawStocks = 0
+    rawMaterialsData.forEach((raw: RawMaterialTypes) => {
+      if (Number(raw.quantity) <= Number(raw.quantity_warning)) {
+        lowRawStocks++
+      }
+    })
+    if (lowRawStocks > 0) {
+      setRawAlertCount(lowRawStocks.toString())
+    }
+
+    // Final products
+    const { data: finalProductsData } = await supabase
+      .from('agriko_final_products')
+      .select('quantity, product:product_id(quantity_warning)')
+
+    let lowStocks = 0
+    finalProductsData.forEach((ofp: FinalProductTypes) => {
+      if (Number(ofp.quantity) <= Number(ofp.product.quantity_warning)) {
+        lowStocks++
+      }
+    })
+    if (lowStocks > 0) {
+      setFinalProductAlertCount(lowStocks.toString())
+    }
   }
 
   useEffect(() => {
     if (activeUser.active_office_id.toString() !== '1') {
-      void counter()
+      void officeCounter()
     }
+    if (activeUser.active_office_id.toString() === '1') {
+      void warehouseCounter()
+    }
+    console.log('Sidebar reloaded which has 4 different db queries loaded')
   }, [])
 
   return (
@@ -86,6 +146,13 @@ export default function MainSideBar() {
                 <span className="flex-1 ml-3 whitespace-nowrap">
                   In-stock Products
                 </span>
+                {quantityAlertCount !== '' && (
+                  <span className="inline-flex items-center justify-center rounded-full bg-red-500 w-5 h-5">
+                    <span className="text-white text-xs">
+                      {quantityAlertCount}
+                    </span>
+                  </span>
+                )}
               </Link>
             </li>
             <li>
@@ -147,6 +214,11 @@ export default function MainSideBar() {
                 <span className="flex-1 ml-3 whitespace-nowrap">
                   Raw Materials
                 </span>
+                {rawAlertCount !== '' && (
+                  <span className="inline-flex items-center justify-center rounded-full bg-red-500 w-5 h-5">
+                    <span className="text-white text-xs">{rawAlertCount}</span>
+                  </span>
+                )}
               </Link>
             </li>
             <li>
@@ -160,6 +232,13 @@ export default function MainSideBar() {
                 <span className="flex-1 ml-3 whitespace-nowrap">
                   Final Products
                 </span>
+                {finalProductAlertCount !== '' && (
+                  <span className="inline-flex items-center justify-center rounded-full bg-red-500 w-5 h-5">
+                    <span className="text-white text-xs">
+                      {finalProductAlertCount}
+                    </span>
+                  </span>
+                )}
               </Link>
             </li>
             <li>

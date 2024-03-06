@@ -225,11 +225,11 @@ const Page: React.FC = () => {
       <div className="app__main">
         <div>
           <div className="app__title">
-            <Title title="User Accounts" />
+            <Title title="Employee Accounts" />
             {!loading && (
               <CustomButton
                 containerStyles="app__btn_green"
-                title="Add New Account"
+                title="Add New Employee"
                 btnType="button"
                 handleClick={handleAdd}
               />

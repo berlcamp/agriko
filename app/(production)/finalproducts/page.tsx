@@ -253,7 +253,9 @@ const Page: React.FC = () => {
                               <span
                                 className={`app__product_grid_quantity ${
                                   Number(product.quantity_warning) >=
-                                    Number(product.quantity) && '!text-red-600'
+                                    Number(product.quantity) &&
+                                  Number(product.quantity) !== 0 &&
+                                  '!text-red-600'
                                 }`}>
                                 {product.quantity}
                               </span>
