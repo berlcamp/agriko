@@ -61,9 +61,9 @@ const Page: React.FC = () => {
                   title="Super Admin"
                 />
                 <div className="text-xs font-light text-gray-600 mb-10">
-                  Super Admin can create and manage users account, access and
-                  manage multi-offices, manage warehouse products and raw
-                  materials, and can transfer products to other offices.
+                  Super Admin can create and manage users account, manage
+                  multi-offices, manage warehouse products and raw materials,
+                  and can transfer products to other offices.
                 </div>
                 <ChooseUsers
                   multiple={true}
@@ -73,7 +73,7 @@ const Page: React.FC = () => {
                 />
                 <span className="text-xs font-light text-gray-600">
                   Office Managers can add/update product stocks and receive
-                  incoming products of assigned office
+                  incoming products.
                 </span>
               </>
             )}

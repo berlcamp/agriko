@@ -166,7 +166,7 @@ const Page: React.FC = () => {
         setList(categoryArr)
         setLoading(false)
 
-        setLabels(['Stocks'])
+        setLabels(['Products'])
         setDataSets(dataSetsData)
       }
     })()
@@ -185,7 +185,7 @@ const Page: React.FC = () => {
             onClick={() => setViewType('grid')}
             className={`${
               viewType === 'grid'
-                ? 'w-8 h-8 bg-gray-400 p-1 rounded-lg cursor-pointer'
+                ? 'w-8 h-8 bg-gray-300 p-1 rounded-lg cursor-pointer'
                 : 'w-7 h-7 cursor-pointer'
             }`}
           />
@@ -193,7 +193,7 @@ const Page: React.FC = () => {
             onClick={() => setViewType('list')}
             className={`${
               viewType === 'list'
-                ? 'w-8 h-8 bg-gray-400 p-1 rounded-lg cursor-pointer'
+                ? 'w-8 h-8 bg-gray-300 p-1 rounded-lg cursor-pointer'
                 : 'w-7 h-7 cursor-pointer'
             }`}
           />
@@ -201,7 +201,7 @@ const Page: React.FC = () => {
             onClick={() => setViewType('chart')}
             className={`${
               viewType === 'chart'
-                ? 'w-8 h-8 bg-gray-400 p-1 rounded-lg cursor-pointer'
+                ? 'w-8 h-8 bg-gray-300 p-1 rounded-lg cursor-pointer'
                 : 'w-7 h-7 cursor-pointer'
             }`}
           />
