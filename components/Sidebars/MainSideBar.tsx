@@ -96,7 +96,7 @@ export default function MainSideBar() {
   }, [])
 
   return (
-    <div className="px-2">
+    <div className="px-2 mt-4">
       {/* Hide if active office is Dumingag-Warehouse */}
       {activeUser.active_office_id.toString() !== '1' && (
         <>
