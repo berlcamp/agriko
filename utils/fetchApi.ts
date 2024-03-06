@@ -175,7 +175,7 @@ export async function fetchOrderTransactions (filters: { filterOffice?: string, 
   try {
     let query = supabase
       .from('agriko_order_transactions')
-      .select('*, customer:customer_id(*), agriko_ordered_products(*)', { count: 'exact' })
+      .select('*, customer:customer_id(*), agriko_ordered_products(*), cashier:cashier_id(firstname,middlename,lastname,avatar_url)', { count: 'exact' })
 
 
     // Filter date

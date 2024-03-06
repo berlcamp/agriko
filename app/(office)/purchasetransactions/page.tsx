@@ -11,6 +11,7 @@ import {
   TableRowLoading,
   Title,
   TopBar,
+  UserBlock,
 } from '@/components/index'
 import { useFilter } from '@/context/FilterContext'
 import { useSupabase } from '@/context/SupabaseProvider'
@@ -77,6 +78,12 @@ const Page: React.FC = () => {
   const [showProductsModal, setShowProductsModal] = useState(false)
   const [products, setProducts] = useState<OrderedProductTypes[] | []>([])
 
+  // Summary Data
+  const [grossSales, setGrossSales] = useState(0)
+  const [refunds, setRefunds] = useState(0)
+  const [discounts, setDiscounts] = useState(0)
+  const [netSales, setNetSales] = useState(0)
+
   // Redux staff
   const globallist = useSelector((state: any) => state.list.value)
   const resultsCounter = useSelector((state: any) => state.results.value)
@@ -101,6 +108,9 @@ const Page: React.FC = () => {
         perPageCount,
         0
       )
+
+      // Get summary
+      void handleGetSummary(result.data)
 
       // update the list in redux
       dispatch(updateList(result.data))
@@ -138,6 +148,9 @@ const Page: React.FC = () => {
       // update the list in redux
       const newList = [...list, ...result.data]
       dispatch(updateList(newList))
+
+      // Get summary
+      void handleGetSummary(newList)
 
       // Updating showing text in redux
       dispatch(
@@ -288,6 +301,34 @@ const Page: React.FC = () => {
     }
   }
 
+  const handleGetSummary = (
+    orderTransactions: OrderTransactionTypes[] | []
+  ) => {
+    let grossTotal = 0
+    let refundsTotal = 0
+    let discountsTotal = 0
+    let ordersTotal = 0
+
+    orderTransactions.forEach((ot) => {
+      ot.agriko_ordered_products?.map((op) => {
+        if (op.status !== 'Canceled') {
+          grossTotal += Number(op.product_price) * Number(op.quantity)
+          discountsTotal += Number(op.discount_total)
+          ordersTotal += Number(op.quantity)
+        }
+        if (op.status === 'Canceled') {
+          refundsTotal += Number(op.total_amount)
+        }
+      })
+    })
+
+    // Set summary data
+    setGrossSales(grossTotal)
+    setRefunds(refundsTotal)
+    setDiscounts(discountsTotal)
+    setNetSales(Number(grossTotal) - Number(refundsTotal + discountsTotal))
+  }
+
   useEffect(() => {
     setList(globallist)
   }, [globallist])
@@ -324,6 +365,47 @@ const Page: React.FC = () => {
           {loading && <TwoColTableLoading />}
           {!loading && (
             <>
+              <div className="grid grid-cols-4 bg-slate-50 border-t">
+                <div className="hover:bg-slate-200 text-gray-700">
+                  <div className="p-2">
+                    <div className="text-center font-extralight">
+                      Gross Sales
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <TbCurrencyPeso className="w-7 h-7" />
+                      <span className="text-2xl">{grossSales}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="hover:bg-slate-200 text-gray-700">
+                  <div className="p-2">
+                    <div className="text-center font-extralight">Refunds</div>
+                    <div className="flex items-center justify-center">
+                      <TbCurrencyPeso className="w-7 h-7" />
+                      <span className="text-2xl">{refunds}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="hover:bg-slate-200 text-gray-700">
+                  <div className="p-2">
+                    <div className="text-center font-extralight">Discounts</div>
+                    <div className="flex items-center justify-center">
+                      <TbCurrencyPeso className="w-7 h-7" />
+                      <span className="text-2xl">{discounts}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="hover:bg-slate-200 text-gray-700">
+                  <div className="p-2">
+                    <div className="text-center font-extralight">Net Sales</div>
+                    <div className="flex items-center justify-center">
+                      <TbCurrencyPeso className="w-7 h-7" />
+                      <span className="text-2xl">{netSales}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Per Page */}
               <PerPage
                 showingCount={resultsCounter.showing}
@@ -345,6 +427,7 @@ const Page: React.FC = () => {
                       <th className="hidden md:table-cell app__th">
                         Total Amount
                       </th>
+                      <th className="hidden md:table-cell app__th">Cashier</th>
                       <th className="hidden md:table-cell app__th"></th>
                     </tr>
                   </thead>
@@ -456,6 +539,14 @@ const Page: React.FC = () => {
                                   </span>
                                 </div>
                               </div>
+                              <div>
+                                <span className="app_td_mobile_label">
+                                  Cashier:
+                                </span>{' '}
+                                {item.cashier?.firstname}{' '}
+                                {item.cashier?.middlename}{' '}
+                                {item.cashier?.lastname}
+                              </div>
                               <div className="space-x-2">
                                 <CustomButton
                                   containerStyles="app__btn_blue_xs"
@@ -483,6 +574,9 @@ const Page: React.FC = () => {
                                 )}
                               </span>
                             </div>
+                          </td>
+                          <td className="hidden md:table-cell app__td">
+                            {item.cashier && <UserBlock user={item.cashier} />}
                           </td>
                           <td className="hidden md:table-cell app__td">
                             {item.status === 'Canceled' && (

@@ -177,6 +177,7 @@ export interface OrderTransactionTypes {
   customer_id: number
   transaction_date: string
   cashier_id: string
+  cashier?: AccountTypes
   status?: string
   total_amount: number
   office_id: string

@@ -30,9 +30,7 @@ const FormSchema = z.object({
     .positive({
       message: 'Quantity is required...',
     }),
-  remarks: z.string().min(1, {
-    message: 'Remarks is required.',
-  }),
+  remarks: z.string(),
   confirmed: z.literal(true, {
     errorMap: () => ({ message: 'Confirmation is required' }),
   }),
