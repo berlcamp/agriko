@@ -100,7 +100,6 @@ const Page: React.FC = () => {
       const { data: allProductsData } = await supabase
         .from('agriko_products')
         .select('*')
-        .eq('status', 'Active')
         .order('id', { ascending: true })
 
       const allProducts: ProductTypes[] | [] = allProductsData
