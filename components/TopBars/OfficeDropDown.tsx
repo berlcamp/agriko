@@ -61,7 +61,7 @@ const OfficeDropDown = ({ darkMode }: propTypes) => {
         {!hasAccess('superadmin') &&
           !superAdmins.includes(session.user.email) && (
             <div className="flex items-center space-x-1">
-              <span className="text-sm text-gray-600">Office:</span>
+              {/* <span className="text-sm text-gray-600">Office:</span> */}
               <div className="flex items-center justify-between space-x-2 text-sm px-2 py-1 border rounded-md font-bold text-gray-700">
                 <span>{office?.name}</span>
               </div>
@@ -72,7 +72,7 @@ const OfficeDropDown = ({ darkMode }: propTypes) => {
           <Popover>
             <PopoverTrigger>
               <div className="flex items-center space-x-1">
-                <span className="text-sm text-gray-600">Office:</span>
+                {/* <span className="text-sm text-gray-600">Office:</span> */}
                 <div className="flex items-center justify-between space-x-2 text-sm px-2 py-1 border rounded-md font-bold text-gray-700">
                   <span>{office?.name}</span>
                   <ChevronDown className="w-5 h-5" />

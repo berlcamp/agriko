@@ -10,7 +10,7 @@ export default async function LandingPage() {
         </div>
         <div className="bg-gray-800 p-4">
           <div className="text-white text-center text-xs">
-            Lease Collections System v1.1
+            Agriko Inventory by BTC
           </div>
         </div>
       </div>

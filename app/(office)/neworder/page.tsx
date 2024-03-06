@@ -512,7 +512,7 @@ export default function Page() {
             sub_total:
               p.product.discount_type !== 'None'
                 ? p.product.discounted_price
-                : p.product.discounted_price,
+                : p.product.price,
             category: p.product.category,
             size,
             value: `${p.product.name} (${size})`,

@@ -33,10 +33,12 @@ import { superAdmins } from '@/constants'
 import { Menu, Transition } from '@headlessui/react'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
 import { format } from 'date-fns'
-import { ShoppingCart } from 'lucide-react'
+import { PrinterIcon, ShoppingCart } from 'lucide-react'
+import { TbCurrencyPeso } from 'react-icons/tb'
 import { useDispatch, useSelector } from 'react-redux'
 import Filters from './Filters'
 import ViewProducts from './ProductsModal'
+import ReceiptModal from './ReceiptModal'
 
 interface UpsertArrayTypes {
   id: number
@@ -60,6 +62,9 @@ const Page: React.FC = () => {
     undefined
   )
   const [filterCashier, setFilterCashier] = useState('All')
+
+  // Receipt modal
+  const [showReceiptModal, setShowReceiptModal] = useState(false)
 
   // Confirm modal
   const [showConfirmModal, setShowConfirmModal] = useState('')
@@ -150,6 +155,11 @@ const Page: React.FC = () => {
 
   const handleViewProducts = (products: OrderedProductTypes[]) => {
     setShowProductsModal(true)
+    setProducts(products)
+  }
+
+  const handlePrintReceipt = (products: OrderedProductTypes[]) => {
+    setShowReceiptModal(true)
     setProducts(products)
   }
 
@@ -379,6 +389,18 @@ const Page: React.FC = () => {
                                         <span>View Products</span>
                                       </div>
                                     </Menu.Item>
+                                    <Menu.Item>
+                                      <div
+                                        onClick={() =>
+                                          handlePrintReceipt(
+                                            item.agriko_ordered_products!
+                                          )
+                                        }
+                                        className="app__dropdown_item">
+                                        <PrinterIcon className="w-4 h-4" />
+                                        <span>Re-Print Receipt</span>
+                                      </div>
+                                    </Menu.Item>
                                     {item.status !== 'Canceled' &&
                                       (hasAccess('manager') ||
                                         hasAccess('superadmin') ||
@@ -425,7 +447,14 @@ const Page: React.FC = () => {
                                 <span className="app_td_mobile_label">
                                   Total Amount:
                                 </span>{' '}
-                                {item.total_amount}
+                                <div className="flex items-center space-x-1">
+                                  <TbCurrencyPeso />
+                                  <span>
+                                    {Number(item.total_amount).toLocaleString(
+                                      'en-US'
+                                    )}
+                                  </span>
+                                </div>
                               </div>
                               <div className="space-x-2">
                                 <CustomButton
@@ -446,7 +475,14 @@ const Page: React.FC = () => {
                             {item.customer?.name}
                           </td>
                           <td className="hidden md:table-cell app__td">
-                            {item.total_amount}
+                            <div className="flex items-center space-x-1">
+                              <TbCurrencyPeso />
+                              <span>
+                                {Number(item.total_amount).toLocaleString(
+                                  'en-US'
+                                )}
+                              </span>
+                            </div>
                           </td>
                           <td className="hidden md:table-cell app__td">
                             {item.status === 'Canceled' && (
@@ -495,6 +531,15 @@ const Page: React.FC = () => {
           message={confirmMessage}
           onConfirm={HandleOnConfirm}
           onCancel={handleOnCancel}
+        />
+      )}
+      {/* Receipt Modal */}
+      {showReceiptModal && (
+        <ReceiptModal
+          orderedProducts={products}
+          hideModal={() => {
+            setShowReceiptModal(false)
+          }}
         />
       )}
     </>

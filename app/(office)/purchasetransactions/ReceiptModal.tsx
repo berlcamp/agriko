@@ -11,8 +11,6 @@ import { useReactToPrint } from 'react-to-print'
 interface ModalProps {
   hideModal: () => void
   orderedProducts: OrderedProductTypes[]
-  cartTotal: number
-  change: number
 }
 
 interface ChildProps {
@@ -94,12 +92,7 @@ const ComponentToPrint: React.FC<ChildProps> = ({
   )
 }
 
-const ReceiptModal: React.FC<ModalProps> = ({
-  hideModal,
-  orderedProducts,
-  cartTotal,
-  change,
-}) => {
+const ReceiptModal: React.FC<ModalProps> = ({ hideModal, orderedProducts }) => {
   const componentRef = useRef<HTMLDivElement>(null)
 
   // Using forwardRef to pass the ref down to the ChildComponent
@@ -134,21 +127,6 @@ const ReceiptModal: React.FC<ModalProps> = ({
             </div>
 
             <div className="app__modal_body">
-              <div className="my-4 text-center font-light text-xl">
-                Transaction Completed
-              </div>
-              <div className="my-4 text-center text-xl">
-                <div className="flex items-center justify-center space-x-6 text-sm">
-                  <div>
-                    Total:{' '}
-                    <span className="font-bold text-lg">{cartTotal}</span>
-                  </div>
-                  <div>
-                    Change:
-                    <span className="font-bold text-lg">{change}</span>
-                  </div>
-                </div>
-              </div>
               <div className="mt-4 mb-8 text-center text-xl">
                 <CustomButton
                   btnType="button"
